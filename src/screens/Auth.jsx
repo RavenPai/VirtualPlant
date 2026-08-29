@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PlantCanvas from '../components/PlantCanvas'
 import { useGame } from '../game/GameContext'
 
 export default function Auth() {
@@ -54,7 +55,14 @@ export default function Auth() {
           : 'Log in to restore your plant, habits, and yard from Supabase.'}
       </p>
 
-      <form className="mt-8 flex flex-1 flex-col" onSubmit={submit}>
+      <div className="mx-auto mt-4 h-40 w-full max-w-[220px]">
+        <PlantCanvas
+          className="h-full w-full"
+          frame={{ growth01: 0.42, neglect01: 0, status: 'thriving', weatherKind: 'clear' }}
+        />
+      </div>
+
+      <form className="mt-4 flex flex-1 flex-col" onSubmit={submit}>
         <label className="text-xs uppercase tracking-widest text-white/60">Email</label>
         <input
           className="vp-input mt-2"

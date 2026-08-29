@@ -54,6 +54,9 @@ export default function Home() {
           frame={{
             status,
             stage,
+            day,
+            hp: state.hp,
+            resources: state.resources,
             growthAccumulated: state.growthAccumulated,
             classification,
             weatherKind: kind,

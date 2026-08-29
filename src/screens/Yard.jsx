@@ -31,7 +31,10 @@ export default function Yard() {
                     frame={{
                       status: 'thriving',
                       stage: 4,
+                      day: 90,
                       growthAccumulated: 90,
+                      growth01: 1,
+                      neglect01: tree.classification === 'stunted' ? 0.55 : tree.classification === 'standard' ? 0.2 : 0,
                       classification: tree.classification,
                     }}
                   />

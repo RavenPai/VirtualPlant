@@ -1,39 +1,91 @@
 import { useEffect, useRef } from 'react'
+import { growthAxis, mixHex, neglectAxis, PLANT_PALETTE } from '../game/plantVisual'
 
-function leaf(ctx, x, y, size, angle, color, alpha = 1) {
+function mulberry(seed) {
+  let t = seed + 0x6d2b79f5
+  t = Math.imul(t ^ (t >>> 15), t | 1)
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+
+function ovateLeaf(ctx, x, y, len, angle, color, wilt, shade) {
+  const w = len * 0.38
   ctx.save()
   ctx.translate(x, y)
-  ctx.rotate(angle)
-  ctx.globalAlpha = alpha
-  ctx.fillStyle = color
+  ctx.rotate(angle + wilt * 0.45)
   ctx.beginPath()
-  ctx.ellipse(0, 0, size * 0.38, size, 0, 0, Math.PI * 2)
+  ctx.moveTo(0, 0)
+  ctx.bezierCurveTo(w, len * 0.18, w * 1.05, len * 0.55, 0, len)
+  ctx.bezierCurveTo(-w * 1.05, len * 0.55, -w, len * 0.18, 0, 0)
+  ctx.fillStyle = shade
+  ctx.fill()
+  ctx.fillStyle = color
+  ctx.globalAlpha = 0.88
+  ctx.fill()
+  ctx.globalAlpha = 1
+  ctx.strokeStyle = 'rgba(20,40,18,0.18)'
+  ctx.lineWidth = Math.max(0.6, len * 0.04)
+  ctx.beginPath()
+  ctx.moveTo(0, len * 0.08)
+  ctx.quadraticCurveTo(w * 0.08, len * 0.5, 0, len * 0.92)
+  ctx.stroke()
+  ctx.fillStyle = 'rgba(255,255,255,0.16)'
+  ctx.beginPath()
+  ctx.ellipse(-w * 0.22, len * 0.32, w * 0.18, len * 0.16, -0.4, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
 }
 
-function fruit(ctx, x, y, r, color) {
-  ctx.fillStyle = color
+function fruit(ctx, x, y, r, color, shrivel) {
+  const s = r * (1 - shrivel * 0.28)
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.scale(1, 1 - shrivel * 0.12)
+  const g = ctx.createRadialGradient(-s * 0.3, -s * 0.35, s * 0.1, 0, 0, s)
+  g.addColorStop(0, 'rgba(255,255,255,0.45)')
+  g.addColorStop(0.35, color)
+  g.addColorStop(1, 'rgba(40,28,22,0.45)')
+  ctx.fillStyle = g
   ctx.beginPath()
-  ctx.arc(x, y, r, 0, Math.PI * 2)
+  ctx.arc(0, 0, s, 0, Math.PI * 2)
   ctx.fill()
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'
-  ctx.beginPath()
-  ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.28, 0, Math.PI * 2)
-  ctx.fill()
+  ctx.fillStyle = 'rgba(90,60,30,0.55)'
+  ctx.fillRect(-0.8, -s - 3, 1.6, 4)
+  ctx.restore()
 }
 
 function drawRain(ctx, w, h, t) {
-  ctx.strokeStyle = 'rgba(210,230,255,0.45)'
-  ctx.lineWidth = 1.2
+  ctx.strokeStyle = 'rgba(210,230,255,0.4)'
+  ctx.lineWidth = 1.1
   for (let i = 0; i < 42; i++) {
-    const x = ((i * 47 + t * 180) % w)
-    const y = ((i * 73 + t * 420) % h)
+    const x = (i * 47 + t * 180) % w
+    const y = (i * 73 + t * 420) % h
     ctx.beginPath()
     ctx.moveTo(x, y)
     ctx.lineTo(x + 4, y + 14)
     ctx.stroke()
   }
+}
+
+function canopyLeaves(growth, neglect) {
+  const sage = mixHex(PLANT_PALETTE.leafHealthy, PLANT_PALETTE.leafDry, neglect)
+  const sageBack = mixHex(sage, '#2d5a3a', 0.35)
+  const count = Math.round(4 + growth * 52)
+  const leaves = []
+  for (let i = 0; i < count; i++) {
+    const u = mulberry(i * 97 + 11)
+    const v = mulberry(i * 53 + 29)
+    const ring = mulberry(i * 17 + 4)
+    leaves.push({
+      u,
+      v,
+      ring,
+      len: 11 + u * 10 + growth * 6,
+      ang: (v - 0.5) * 2.4,
+      back: ring < 0.4,
+    })
+  }
+  return { sage, sageBack, leaves }
 }
 
 export default function PlantCanvas({ frame, className }) {
@@ -58,104 +110,144 @@ export default function PlantCanvas({ frame, className }) {
     observer.observe(canvas)
 
     function draw(ts) {
-      const f = frameRef.current
+      const f = frameRef.current || {}
       const w = canvas.getBoundingClientRect().width
       const h = canvas.getBoundingClientRect().height
       ctx.clearRect(0, 0, w, h)
 
-      const status = f.status
-      const stage = f.stage
-      const growth = (f.growthAccumulated || 8) / 100
+      const growth = growthAxis(f)
+      const neglect = neglectAxis(f)
       const classification = f.classification
-      const sway = Math.sin(ts / 900) * 0.03
-      const soilY = h * 0.82
-
-      ctx.fillStyle = status === 'dead' || status === 'critical' ? '#5a4630' : '#6b4a2a'
-      ctx.beginPath()
-      ctx.ellipse(w / 2, soilY + 8, w * 0.28, 16, 0, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = status === 'critical' || status === 'dead' ? '#7a5a32' : '#3e6b32'
-      ctx.beginPath()
-      ctx.ellipse(w / 2, soilY + 2, w * 0.2, 10, 0, 0, Math.PI * 2)
-      ctx.fill()
-
-      const baseX = w / 2
-      const heightMul = stage === 1 ? 0.28 : stage === 2 ? 0.48 : stage === 3 ? 0.68 : 0.82
       const classMul = classification === 'stunted' ? 0.62 : classification === 'standard' ? 0.85 : 1
-      const treeH = h * heightMul * (0.55 + growth * 0.55) * (status === 'dead' ? 0.7 : classMul)
+      const sway = Math.sin(ts / 900) * 0.028
+      const soilY = h * 0.86
+      const baseX = w / 2
+      const dead = f.status === 'dead'
+      const wilt = neglect * 0.7
+
+      const treeH = h * (0.16 + growth * 0.62) * (dead ? 0.72 : classMul)
       const trunkTop = soilY - treeH
-      const trunkW = 6 + stage * 3.2 * classMul
+      const trunkW = 5 + growth * 14 * classMul
+
+      ctx.fillStyle = 'rgba(18, 22, 14, 0.28)'
+      ctx.beginPath()
+      ctx.ellipse(baseX, soilY + 10, 42 + growth * 28, 9, 0, 0, Math.PI * 2)
+      ctx.fill()
+
+      const soil = ctx.createRadialGradient(baseX, soilY, 4, baseX, soilY, 70)
+      soil.addColorStop(0, neglect > 0.6 ? '#6a5330' : '#5c3a22')
+      soil.addColorStop(1, 'rgba(60,40,24,0)')
+      ctx.fillStyle = soil
+      ctx.beginPath()
+      ctx.ellipse(baseX, soilY + 4, 48, 11, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = neglect > 0.55 ? '#8a6a38' : '#3f6b32'
+      ctx.beginPath()
+      ctx.ellipse(baseX, soilY + 1, 22 + growth * 8, 5, 0, 0, Math.PI * 2)
+      ctx.fill()
 
       ctx.save()
       ctx.translate(baseX, soilY)
       ctx.rotate(sway)
       ctx.translate(-baseX, -soilY)
 
-      const trunkGrad = ctx.createLinearGradient(baseX, soilY, baseX, trunkTop)
-      trunkGrad.addColorStop(0, status === 'dead' ? '#6b5340' : '#6a4024')
-      trunkGrad.addColorStop(1, status === 'dead' ? '#8a7358' : '#8a5a32')
-      ctx.fillStyle = trunkGrad
+      const bark = ctx.createLinearGradient(baseX - trunkW, soilY, baseX + trunkW, trunkTop)
+      bark.addColorStop(0, PLANT_PALETTE.barkDark)
+      bark.addColorStop(0.5, PLANT_PALETTE.barkLight)
+      bark.addColorStop(1, mixHex(PLANT_PALETTE.barkLight, '#c4a574', 0.15))
+      ctx.fillStyle = bark
       ctx.beginPath()
-      ctx.moveTo(baseX - trunkW / 2, soilY)
-      ctx.quadraticCurveTo(baseX + sway * 80, (soilY + trunkTop) / 2, baseX - trunkW / 3, trunkTop)
-      ctx.lineTo(baseX + trunkW / 3, trunkTop)
-      ctx.quadraticCurveTo(baseX - sway * 80, (soilY + trunkTop) / 2, baseX + trunkW / 2, soilY)
+      ctx.moveTo(baseX - trunkW * 0.55, soilY)
+      ctx.quadraticCurveTo(baseX + sway * 40, (soilY + trunkTop) / 2, baseX - trunkW * 0.28, trunkTop)
+      ctx.lineTo(baseX + trunkW * 0.28, trunkTop)
+      ctx.quadraticCurveTo(baseX - sway * 40, (soilY + trunkTop) / 2, baseX + trunkW * 0.55, soilY)
       ctx.closePath()
       ctx.fill()
 
-      if (status !== 'dead' && stage >= 2) {
-        ctx.strokeStyle = '#6a4024'
-        ctx.lineWidth = 3
+      ctx.strokeStyle = 'rgba(30,16,8,0.28)'
+      ctx.lineWidth = 1
+      for (let i = 0; i < 5; i++) {
+        const x = baseX - trunkW * 0.2 + i * 2.2
+        ctx.beginPath()
+        ctx.moveTo(x, soilY - 4)
+        ctx.quadraticCurveTo(x + 1.5, (soilY + trunkTop) / 2, x - 1, trunkTop + 8)
+        ctx.stroke()
+      }
+
+      const branchAlpha = Math.max(0, (growth - 0.22) / 0.35)
+      if (branchAlpha > 0.02 && !dead) {
+        ctx.globalAlpha = Math.min(1, branchAlpha)
+        ctx.strokeStyle = PLANT_PALETTE.barkDark
         ctx.lineCap = 'round'
-        ctx.beginPath()
-        ctx.moveTo(baseX, trunkTop + treeH * 0.35)
-        ctx.quadraticCurveTo(baseX - 40, trunkTop + treeH * 0.2, baseX - 52, trunkTop + treeH * 0.08)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(baseX, trunkTop + treeH * 0.42)
-        ctx.quadraticCurveTo(baseX + 36, trunkTop + treeH * 0.25, baseX + 50, trunkTop + treeH * 0.12)
-        ctx.stroke()
+        const arms = [
+          [-1, 0.38, 0.22],
+          [1, 0.42, 0.24],
+          [-1, 0.62, 0.18],
+          [1, 0.68, 0.17],
+          [0.15, 0.82, 0.14],
+        ]
+        arms.forEach(([side, along, reach], i) => {
+          ctx.lineWidth = 2.2 + growth * 2 - i * 0.25
+          const y0 = soilY - treeH * along
+          ctx.beginPath()
+          ctx.moveTo(baseX, y0)
+          ctx.quadraticCurveTo(
+            baseX + side * 18,
+            y0 - 16,
+            baseX + side * (28 + growth * 36) * reach * 4,
+            y0 - 22 - growth * 18,
+          )
+          ctx.stroke()
+        })
+        ctx.globalAlpha = 1
       }
 
-      const leafCount = status === 'dead' ? 2 : stage === 1 ? 6 : stage === 2 ? 16 : stage === 3 ? 28 : 38
-      const density = classification === 'stunted' ? 0.45 : classification === 'standard' ? 0.75 : 1
-      const n = Math.round(leafCount * density)
-      const wilt = status === 'struggling' ? 0.35 : status === 'critical' ? 0.7 : 0
-      const greens = status === 'critical' || status === 'dead'
-        ? ['#8a7a48', '#6e6238', '#9a8a55']
-        : status === 'struggling'
-          ? ['#b7b04a', '#7d9a45', '#c4c25a']
-          : ['#3f8a3a', '#67b54a', '#2f6d2c', '#8fd15c']
+      const { sage, sageBack, leaves } = canopyLeaves(growth, neglect)
+      const canopyY = trunkTop + 8
+      const spread = 16 + growth * 48
+      const canopyOn = growth > 0.08
 
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + sway
-        const spread = (18 + stage * 14) * (0.7 + growth)
-        const rx = Math.cos(a) * spread * (0.85 + (i % 5) * 0.08)
-        const ry = Math.sin(a * 1.3) * spread * 0.55 - 8
-        const x = baseX + rx
-        const y = trunkTop + 10 + ry + wilt * 12
-        leaf(ctx, x, y, 7 + (i % 4) + stage, a * 0.4 + wilt, greens[i % greens.length], status === 'dead' ? 0.35 : 0.92)
+      if (canopyOn) {
+        leaves.forEach((leaf, i) => {
+          if (growth < 0.28 && i > 3) return
+          if (growth < 0.55 && i > 18) return
+          const ox = (leaf.u - 0.5) * spread * 2
+          const oy = (leaf.v - 0.5) * spread * 0.9 + leaf.ring * 8
+          ovateLeaf(
+            ctx,
+            baseX + ox,
+            canopyY + oy + wilt * 10,
+            leaf.len,
+            leaf.ang + wilt * 0.3,
+            leaf.back ? sageBack : sage,
+            wilt,
+            leaf.back ? 'rgba(30,50,28,0.35)' : 'rgba(20,40,18,0.12)',
+          )
+        })
       }
 
-      if (stage === 4 && classification === 'grand' && status !== 'dead' && status !== 'critical') {
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * Math.PI * 2
-          const x = baseX + Math.cos(a) * 28
-          const y = trunkTop + 18 + Math.sin(a) * 16
-          fruit(ctx, x, y, 5, i % 2 ? '#e85d4c' : '#f2c14e')
-        }
-        for (let i = 0; i < 10; i++) {
-          const a = (i / 10) * Math.PI * 2 + 0.3
-          leaf(ctx, baseX + Math.cos(a) * 22, trunkTop + Math.sin(a) * 12, 5, a, '#f4a6c3', 0.9)
-        }
+      if (growth < 0.22) {
+        ovateLeaf(ctx, baseX - 16, soilY - 22 - growth * 20, 16, -0.7, sage, wilt * 0.2, 'rgba(20,40,18,0.12)')
+        ovateLeaf(ctx, baseX + 16, soilY - 22 - growth * 20, 16, 0.7, sage, wilt * 0.2, 'rgba(20,40,18,0.12)')
       }
 
-      if (stage === 1) {
-        ctx.fillStyle = '#7dcf5c'
-        ctx.beginPath()
-        ctx.ellipse(baseX - 8, soilY - 18, 5, 11, -0.5, 0, Math.PI * 2)
-        ctx.ellipse(baseX + 8, soilY - 18, 5, 11, 0.5, 0, Math.PI * 2)
-        ctx.fill()
+      const fruitT = Math.max(0, (growth - 0.82) / 0.18)
+      if (fruitT > 0 && f.status !== 'dead') {
+        const ripe = mixHex(PLANT_PALETTE.fruitRipe, PLANT_PALETTE.fruitDead, neglect)
+        const spots = [
+          [-0.42, 0.22],
+          [0.4, 0.18],
+          [-0.18, 0.02],
+          [0.22, -0.06],
+          [0.02, 0.28],
+          [-0.32, -0.12],
+          [0.48, 0.08],
+          [-0.08, 0.38],
+        ]
+        spots.forEach(([dx, dy], i) => {
+          if (i / spots.length > fruitT) return
+          fruit(ctx, baseX + dx * spread * 1.4, canopyY + dy * spread + wilt * 6, 6 + growth, ripe, neglect)
+        })
       }
 
       ctx.restore()

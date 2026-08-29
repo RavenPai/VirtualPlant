@@ -1,7 +1,10 @@
 """
 Virtual Plant — photorealistic procedural Blender asset
 ======================================================
-Run inside Blender 3.6+ / 4.x:
+The PWA canvas (`src/components/PlantCanvas.jsx`) uses the same two-axis
+timeline and palette so the in-app plant matches this asset.
+
+Run inside Blender 3.6+ / 4.x / 5.x:
 
     blender --background --python blender/build_virtual_plant.py
 

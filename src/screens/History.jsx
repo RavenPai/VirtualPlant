@@ -35,11 +35,14 @@ export default function History() {
   const frameSnap = snaps[index] || snaps[0]
   const frame = useMemo(() => {
     if (!frameSnap) {
-      return { status: 'thriving', stage: 1, growthAccumulated: 8, classification: record.classification }
+      return { status: 'thriving', stage: 1, day: 1, growthAccumulated: 8, classification: record.classification }
     }
     return {
       status: frameSnap.status,
       stage: frameSnap.stage || growthStage(frameSnap.day || 1),
+      day: frameSnap.day,
+      hp: frameSnap.hp,
+      resources: frameSnap.resources,
       growthAccumulated: frameSnap.growthAccumulated,
       classification: record.classification,
       weatherKind: weatherKind(frameSnap.weather?.code ?? 0, frameSnap.weather?.tempC ?? 22),
