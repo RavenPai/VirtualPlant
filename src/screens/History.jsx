@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 import { useGame } from '../game/GameContext'
-import { classificationLabel, growthStage, weatherKind } from '../game/engine'
+import { classificationLabel, growthStage, timeOfDay, weatherKind } from '../game/engine'
 
 export default function History() {
   const { state, replay, setScreen, setReplay } = useGame()
@@ -35,7 +36,16 @@ export default function History() {
   const frameSnap = snaps[index] || snaps[0]
   const frame = useMemo(() => {
     if (!frameSnap) {
-      return { status: 'thriving', stage: 1, day: 1, growthAccumulated: 8, classification: record.classification }
+      return {
+        status: 'thriving',
+        stage: 1,
+        day: 1,
+        growthAccumulated: 8,
+        classification: record.classification,
+        weatherKind: 'clear',
+        timeOfDay: timeOfDay(),
+        scenicBackdrop: true,
+      }
     }
     return {
       status: frameSnap.status,
@@ -46,6 +56,9 @@ export default function History() {
       growthAccumulated: frameSnap.growthAccumulated,
       classification: record.classification,
       weatherKind: weatherKind(frameSnap.weather?.code ?? 0, frameSnap.weather?.tempC ?? 22),
+      weather: frameSnap.weather,
+      timeOfDay: frameSnap.timeOfDay || timeOfDay(),
+      scenicBackdrop: true,
     }
   }, [frameSnap, record.classification])
 
@@ -69,8 +82,10 @@ export default function History() {
         {record.classification ? ` · ${classificationLabel(record.classification)}` : ''}
       </p>
 
-      <div className="mt-3 h-64 overflow-hidden rounded-[28px] bg-black/15">
-        <PlantCanvas className="h-full w-full" frame={frame} />
+      <div className="mt-3 h-64 overflow-hidden rounded-[28px]">
+        <PlantStage className="h-full w-full" frame={frame}>
+          <PlantCanvas className="h-full w-full" frame={frame} />
+        </PlantStage>
       </div>
 
       <input

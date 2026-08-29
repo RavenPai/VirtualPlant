@@ -1,6 +1,7 @@
 import { useGame } from '../game/GameContext'
 import { QUARTERS, classificationLabel } from '../game/engine'
 import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 
 export default function Yard() {
   const { state, openReplay, setScreen } = useGame()
@@ -26,18 +27,27 @@ export default function Yard() {
             >
               <div className="h-36">
                 {tree ? (
-                  <PlantCanvas
+                  <PlantStage
                     className="h-full w-full"
                     frame={{
-                      status: 'thriving',
-                      stage: 4,
-                      day: 90,
-                      growthAccumulated: 90,
-                      growth01: 1,
-                      neglect01: tree.classification === 'stunted' ? 0.55 : tree.classification === 'standard' ? 0.2 : 0,
-                      classification: tree.classification,
+                      weatherKind: q.id === 'Q4' ? 'snow' : q.id === 'Q3' ? 'rain' : 'clear',
+                      timeOfDay: q.id === 'Q4' ? 'night' : 'afternoon',
                     }}
-                  />
+                  >
+                    <PlantCanvas
+                      className="h-full w-full"
+                      frame={{
+                        status: 'thriving',
+                        stage: 4,
+                        day: 90,
+                        growthAccumulated: 90,
+                        growth01: 1,
+                        neglect01: tree.classification === 'stunted' ? 0.55 : tree.classification === 'standard' ? 0.2 : 0,
+                        classification: tree.classification,
+                        scenicBackdrop: true,
+                      }}
+                    />
+                  </PlantStage>
                 ) : (
                   <div className="flex h-full items-center justify-center text-3xl opacity-40">🌱</div>
                 )}

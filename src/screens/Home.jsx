@@ -1,4 +1,5 @@
 import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 import ResourceBars from '../components/ResourceBars'
 import { useGame } from '../game/GameContext'
 import {
@@ -48,7 +49,10 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="relative mx-4 mt-3 flex-1 overflow-hidden rounded-[28px] bg-black/10 shadow-plant">
+      <PlantStage
+        className="relative mx-4 mt-3 flex-1 rounded-[28px] shadow-plant"
+        frame={{ weatherKind: kind, weather: state.weather, timeOfDay: tod }}
+      >
         <PlantCanvas
           className="h-full w-full"
           frame={{
@@ -60,9 +64,12 @@ export default function Home() {
             growthAccumulated: state.growthAccumulated,
             classification,
             weatherKind: kind,
+            weather: state.weather,
+            timeOfDay: tod,
+            scenicBackdrop: true,
           }}
         />
-        <div className="pointer-events-none absolute bottom-3 left-3 right-3">
+        <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-[2]">
           <div className="rounded-2xl bg-[#14210f]/55 px-3 py-2 text-xs text-white backdrop-blur-md">
             <div className="flex justify-between">
               <span className="capitalize">{status}</span>
@@ -71,7 +78,7 @@ export default function Home() {
             <p className="mt-0.5 text-white/70">{STATUS_COPY[status]}</p>
           </div>
         </div>
-      </div>
+      </PlantStage>
 
       <div className="px-4 py-3">
         <ResourceBars resources={state.resources} />

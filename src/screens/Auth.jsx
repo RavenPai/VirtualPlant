@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 import { useGame } from '../game/GameContext'
+import { timeOfDay } from '../game/engine'
 
 export default function Auth() {
   const { signIn, signUp } = useGame()
@@ -55,11 +57,20 @@ export default function Auth() {
           : 'Log in to restore your plant, habits, and yard from Supabase.'}
       </p>
 
-      <div className="mx-auto mt-4 h-40 w-full max-w-[220px]">
-        <PlantCanvas
-          className="h-full w-full"
-          frame={{ growth01: 0.42, neglect01: 0, status: 'thriving', weatherKind: 'clear' }}
-        />
+      <div className="mx-auto mt-4 h-40 w-full max-w-[220px] overflow-hidden rounded-2xl">
+        <PlantStage className="h-full w-full" frame={{ weatherKind: 'clear', timeOfDay: timeOfDay() }}>
+          <PlantCanvas
+            className="h-full w-full"
+            frame={{
+              growth01: 0.42,
+              neglect01: 0,
+              status: 'thriving',
+              weatherKind: 'clear',
+              timeOfDay: timeOfDay(),
+              scenicBackdrop: true,
+            }}
+          />
+        </PlantStage>
       </div>
 
       <form className="mt-4 flex flex-1 flex-col" onSubmit={submit}>

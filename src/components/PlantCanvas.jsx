@@ -120,7 +120,7 @@ export default function PlantCanvas({ frame, className }) {
       const classification = f.classification
       const classMul = classification === 'stunted' ? 0.62 : classification === 'standard' ? 0.85 : 1
       const sway = Math.sin(ts / 900) * 0.028
-      const soilY = h * 0.86
+      const soilY = f.scenicBackdrop ? h * 0.78 : h * 0.86
       const baseX = w / 2
       const dead = f.status === 'dead'
       const wilt = neglect * 0.7
@@ -129,22 +129,24 @@ export default function PlantCanvas({ frame, className }) {
       const trunkTop = soilY - treeH
       const trunkW = 5 + growth * 14 * classMul
 
-      ctx.fillStyle = 'rgba(18, 22, 14, 0.28)'
-      ctx.beginPath()
-      ctx.ellipse(baseX, soilY + 10, 42 + growth * 28, 9, 0, 0, Math.PI * 2)
-      ctx.fill()
+      if (!f.scenicBackdrop) {
+        ctx.fillStyle = 'rgba(18, 22, 14, 0.28)'
+        ctx.beginPath()
+        ctx.ellipse(baseX, soilY + 10, 42 + growth * 28, 9, 0, 0, Math.PI * 2)
+        ctx.fill()
 
-      const soil = ctx.createRadialGradient(baseX, soilY, 4, baseX, soilY, 70)
-      soil.addColorStop(0, neglect > 0.6 ? '#6a5330' : '#5c3a22')
-      soil.addColorStop(1, 'rgba(60,40,24,0)')
-      ctx.fillStyle = soil
-      ctx.beginPath()
-      ctx.ellipse(baseX, soilY + 4, 48, 11, 0, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = neglect > 0.55 ? '#8a6a38' : '#3f6b32'
-      ctx.beginPath()
-      ctx.ellipse(baseX, soilY + 1, 22 + growth * 8, 5, 0, 0, Math.PI * 2)
-      ctx.fill()
+        const soil = ctx.createRadialGradient(baseX, soilY, 4, baseX, soilY, 70)
+        soil.addColorStop(0, neglect > 0.6 ? '#6a5330' : '#5c3a22')
+        soil.addColorStop(1, 'rgba(60,40,24,0)')
+        ctx.fillStyle = soil
+        ctx.beginPath()
+        ctx.ellipse(baseX, soilY + 4, 48, 11, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = neglect > 0.55 ? '#8a6a38' : '#3f6b32'
+        ctx.beginPath()
+        ctx.ellipse(baseX, soilY + 1, 22 + growth * 8, 5, 0, 0, Math.PI * 2)
+        ctx.fill()
+      }
 
       ctx.save()
       ctx.translate(baseX, soilY)
@@ -252,7 +254,7 @@ export default function PlantCanvas({ frame, className }) {
 
       ctx.restore()
 
-      if (f.weatherKind === 'rain') drawRain(ctx, w, h, ts / 1000)
+      if (f.weatherKind === 'rain' && !f.scenicBackdrop) drawRain(ctx, w, h, ts / 1000)
       raf = requestAnimationFrame(draw)
     }
     raf = requestAnimationFrame(draw)
@@ -262,5 +264,5 @@ export default function PlantCanvas({ frame, className }) {
     }
   }, [])
 
-  return <canvas ref={ref} className={className} />
+  return <canvas ref={ref} className={`block bg-transparent ${className || ''}`} />
 }
