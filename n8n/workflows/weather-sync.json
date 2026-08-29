@@ -3,22 +3,39 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 30 }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
       },
       "id": "every-30",
       "name": "Every 30 minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/profiles?select=id,location&onboarding_complete=eq.true",
-        "headerParametersUi": {
-          "parameter": [
-            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
-            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/profiles?select=id,location&onboarding_complete=eq.true",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$vars.SUPABASE_KEY}}"
+            }
           ]
         }
       },
@@ -26,7 +43,10 @@
       "name": "Get profiles",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [240, 0]
+      "position": [
+        240,
+        0
+      ]
     },
     {
       "parameters": {
@@ -37,20 +57,33 @@
       "name": "Open-Meteo",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [480, 0]
+      "position": [
+        480,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/seasons?user_id=eq.{{$('Get profiles').item.json.id}}&status=eq.active",
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/seasons?user_id=eq.{{$('Get profiles').item.json.id}}&status=eq.active",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ weather: { tempC: $json.current.temperature_2m, cloudCover: $json.current.cloud_cover, code: $json.current.weather_code, isDay: $json.current.is_day === 1, precipitation: $json.current.precipitation, fetchedAt: Date.now() } }) }}",
-        "headerParametersUi": {
-          "parameter": [
-            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
-            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
-            { "name": "Content-Type", "value": "application/json" }
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         }
       },
@@ -58,12 +91,45 @@
       "name": "Save weather",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [720, 0]
+      "position": [
+        720,
+        0
+      ]
     }
   ],
   "connections": {
-    "Every 30 minutes": { "main": [[{ "node": "Get profiles", "type": "main", "index": 0 }]] },
-    "Get profiles": { "main": [[{ "node": "Open-Meteo", "type": "main", "index": 0 }]] },
-    "Open-Meteo": { "main": [[{ "node": "Save weather", "type": "main", "index": 0 }]] }
+    "Every 30 minutes": {
+      "main": [
+        [
+          {
+            "node": "Get profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get profiles": {
+      "main": [
+        [
+          {
+            "node": "Open-Meteo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open-Meteo": {
+      "main": [
+        [
+          {
+            "node": "Save weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   }
 }

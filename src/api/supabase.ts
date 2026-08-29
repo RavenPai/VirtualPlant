@@ -18,6 +18,13 @@ function realUser(user: User | null | undefined) {
   return user
 }
 
+export async function getAccessToken() {
+  const supabase = getSupabase()
+  if (!supabase) return null
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? null
+}
+
 export async function getCurrentUser() {
   const supabase = getSupabase()
   if (!supabase) return null

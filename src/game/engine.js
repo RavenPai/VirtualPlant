@@ -319,6 +319,7 @@ export function freshSeason(base = {}, now = Date.now()) {
     location: base.location || null,
     weather: base.weather || null,
     behavior: base.behavior || { bedtimeScreenMins: 20, sleepHours: 7.5 },
+    notifyMissions: base.notifyMissions !== false,
     seasonStart: now,
     resources: { water: 72, sun: 68, fertilizer: 70 },
     hp: 100,

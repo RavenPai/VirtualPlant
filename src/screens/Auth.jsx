@@ -43,66 +43,71 @@ export default function Auth() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top,#3f6b32,#1a2a14_58%)] px-5 py-8 text-white">
-      <p className="text-xs uppercase tracking-[0.25em] text-lime-200/80">Virtual Plant</p>
-      <h1 className="mt-3 font-display text-4xl leading-tight">
-        {isSignup ? 'Create your garden.' : 'Welcome back.'}
-      </h1>
-      <p className="mt-3 text-sm leading-relaxed text-white/75">
-        {isSignup
-          ? 'Sign up to save your 90-day season to the cloud and pick it up on any device.'
-          : 'Log in to restore your plant, habits, and yard from Supabase.'}
-      </p>
+    <div className="flex h-dvh flex-col overflow-y-auto bg-[radial-gradient(circle_at_top,#3f6b32,#1a2a14_58%)] px-5 py-8 sm:items-center sm:justify-center sm:px-8">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col sm:flex-none sm:rounded-3xl sm:border sm:border-white/15 sm:bg-black/25 sm:p-8 sm:shadow-plant">
+        <p className="text-xs uppercase tracking-[0.25em] text-lime-200/80">Virtual Plant</p>
+        <h1 className="mt-3 font-display text-4xl leading-tight">
+          {isSignup ? 'Create your garden.' : 'Welcome back.'}
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-white/75">
+          {isSignup
+            ? 'Sign up to save your 90-day season to the cloud and pick it up on any device.'
+            : 'Log in to restore your plant, habits, and yard from Supabase.'}
+        </p>
 
-      <form className="mt-8 flex flex-1 flex-col" onSubmit={submit}>
-        <label className="text-xs uppercase tracking-widest text-white/60">Email</label>
-        <input
-          className="vp-input mt-2"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-        />
-        <label className="mt-4 text-xs uppercase tracking-widest text-white/60">Password</label>
-        <input
-          className="vp-input mt-2"
-          type="password"
-          autoComplete={isSignup ? 'new-password' : 'current-password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="At least 6 characters"
-        />
-        {isSignup && (
-          <>
-            <label className="mt-4 text-xs uppercase tracking-widest text-white/60">Confirm password</label>
-            <input
-              className="vp-input mt-2"
-              type="password"
-              autoComplete="new-password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-            />
-          </>
-        )}
-        {error && <p className="mt-3 text-sm text-amber-200">{error}</p>}
-        {notice && <p className="mt-3 text-sm text-lime-200">{notice}</p>}
-        <button type="submit" className="vp-btn mt-auto" disabled={busy}>
-          {busy ? 'Please wait…' : isSignup ? 'Create account' : 'Log in'}
+        <form className="mt-8 flex flex-1 flex-col" onSubmit={submit}>
+          <label className="text-xs uppercase tracking-widest text-white/60" htmlFor="auth-email">Email</label>
+          <input
+            id="auth-email"
+            className="vp-input mt-2"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+          <label className="mt-4 text-xs uppercase tracking-widest text-white/60" htmlFor="auth-password">Password</label>
+          <input
+            id="auth-password"
+            className="vp-input mt-2"
+            type="password"
+            autoComplete={isSignup ? 'new-password' : 'current-password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 6 characters"
+          />
+          {isSignup && (
+            <>
+              <label className="mt-4 text-xs uppercase tracking-widest text-white/60" htmlFor="auth-confirm">Confirm password</label>
+              <input
+                id="auth-confirm"
+                className="vp-input mt-2"
+                type="password"
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
+            </>
+          )}
+          {error && <p className="mt-3 text-sm text-amber-200">{error}</p>}
+          {notice && <p className="mt-3 text-sm text-lime-200">{notice}</p>}
+          <button type="submit" className="vp-btn mt-8 sm:mt-10" disabled={busy}>
+            {busy ? 'Please wait…' : isSignup ? 'Create account' : 'Log in'}
+          </button>
+        </form>
+
+        <button
+          type="button"
+          className="mt-4 min-h-11 text-center text-sm text-white/80 underline-offset-4 hover:underline"
+          onClick={() => {
+            setMode(isSignup ? 'login' : 'signup')
+            setError('')
+            setNotice('')
+          }}
+        >
+          {isSignup ? 'Already have an account? Log in' : 'New here? Create an account'}
         </button>
-      </form>
-
-      <button
-        type="button"
-        className="mt-4 text-center text-sm text-white/70 underline-offset-4 hover:underline"
-        onClick={() => {
-          setMode(isSignup ? 'login' : 'signup')
-          setError('')
-          setNotice('')
-        }}
-      >
-        {isSignup ? 'Already have an account? Log in' : 'New here? Create an account'}
-      </button>
+      </div>
     </div>
   )
 }

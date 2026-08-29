@@ -26,3 +26,22 @@ export function predictTasks(payload: unknown) {
 export function classifySeason(snapshots: unknown[]) {
   return post('/v1/season-consistency', { snapshots })
 }
+
+export async function sendMissionEmail(
+  payload: { email?: string; plantName?: string; deck?: unknown[] },
+  accessToken?: string | null,
+) {
+  if (!hasPython) return false
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+    const res = await fetch(`${env.pythonApiUrl}/v1/send-mission-email`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}

@@ -1,6 +1,6 @@
 import { useGame } from '../game/GameContext'
 import { QUARTERS, classificationLabel } from '../game/engine'
-import PlantCanvas from '../components/PlantCanvas'
+import { PlantStage } from '../components/PlantCanvas'
 
 export default function Yard() {
   const { state, openReplay, setScreen } = useGame()
@@ -8,12 +8,12 @@ export default function Yard() {
   const living = (state.yard || []).filter((t) => t.year === year)
 
   return (
-    <div className="flex h-full flex-col px-4 pt-5 text-white">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">{year} annual yard</p>
-      <h1 className="font-display text-3xl">Four seasons</h1>
-      <p className="mt-1 text-sm text-white/70">Up to four retired trees. Tap one for its 90-day replay.</p>
+    <div className="flex h-full min-h-0 flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] text-white sm:px-6 lg:px-8">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-white/70">{year} annual yard</p>
+      <h1 className="font-display text-3xl sm:text-4xl">Four seasons</h1>
+      <p className="mt-1 text-sm text-white/75">Up to four retired trees. Tap one for its 90-day replay.</p>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-auto pb-4 lg:grid-cols-4">
         {QUARTERS.map((q) => {
           const tree = living.find((t) => t.quarter.id === q.id)
           return (
@@ -22,26 +22,26 @@ export default function Yard() {
               type="button"
               disabled={!tree}
               onClick={() => tree && openReplay(tree)}
-              className="overflow-hidden rounded-3xl bg-white/10 text-left disabled:opacity-50"
+              className="flex flex-col overflow-hidden rounded-3xl bg-white/10 text-left ring-1 ring-white/15 disabled:opacity-50"
             >
-              <div className="h-36">
-                {tree ? (
-                  <PlantCanvas
-                    className="h-full w-full"
-                    frame={{
-                      status: 'thriving',
-                      stage: 4,
-                      growthAccumulated: 90,
-                      classification: tree.classification,
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-3xl opacity-40">🌱</div>
-                )}
-              </div>
+              {tree ? (
+                <PlantStage
+                  className="h-40 w-full sm:h-48 lg:h-56"
+                  frame={{
+                    status: 'thriving',
+                    stage: 4,
+                    growthAccumulated: 90,
+                    classification: tree.classification,
+                  }}
+                />
+              ) : (
+                <div className="flex h-40 w-full items-center justify-center bg-black/20 text-sm text-white/55 sm:h-48 lg:h-56">
+                  Empty plot
+                </div>
+              )}
               <div className="px-3 py-2">
                 <div className="text-xs text-white/60">{q.id} · {q.name}</div>
-                <div className="text-sm font-bold">{tree ? tree.plantName : 'Empty plot'}</div>
+                <div className="text-sm font-bold">{tree ? tree.plantName : 'Waiting'}</div>
                 {tree && (
                   <div className="text-[11px] text-lime-100">
                     {classificationLabel(tree.classification)} · {tree.cSeason.toFixed(0)}%
@@ -53,7 +53,7 @@ export default function Yard() {
         })}
       </div>
 
-      <button type="button" className="mt-4 text-sm text-white/70 underline" onClick={() => setScreen('graveyard')}>
+      <button type="button" className="mb-3 min-h-11 text-left text-sm text-white/80 underline" onClick={() => setScreen('graveyard')}>
         Garden graveyard ({state.graveyard?.length || 0})
       </button>
     </div>

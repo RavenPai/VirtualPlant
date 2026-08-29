@@ -1,8 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header, HTTPException
 
 from app.models.schemas import PlantState, PredictRequest, TickRequest
 from app.services import plant_engine as engine
 from app.services.dataset_ml import dataset_status, user_risk_profile
+from app.services.mailer import send_digest_to_user
+from app.services.mission_mail import build_digest
 
 router = APIRouter(prefix="/v1")
 
@@ -63,6 +65,24 @@ def predict_tasks(body: PredictRequest):
         "datasets": dataset_status(),
         "userRisk": user_risk_profile(state.get("behavior")),
     }
+
+
+@router.post("/mission-digest")
+def mission_digest(body: dict):
+    return build_digest(body)
+
+
+@router.post("/send-mission-email")
+def send_mission_email(body: dict, authorization: str | None = Header(default=None)):
+    result = send_digest_to_user(body, authorization)
+    error = result.get("error")
+    if error == "unauthorized":
+        raise HTTPException(status_code=401, detail="Sign in required")
+    if error == "not_configured":
+        raise HTTPException(status_code=503, detail="Email sending is not configured")
+    if error == "send_failed":
+        raise HTTPException(status_code=502, detail="Email provider rejected the message")
+    return {"ok": True, "to": result.get("to")}
 
 
 @router.post("/season-consistency")

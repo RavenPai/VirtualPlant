@@ -13,6 +13,7 @@ import Today from './screens/Today'
 import Yard from './screens/Yard'
 import Graveyard from './screens/Graveyard'
 import History from './screens/History'
+import Guide from './screens/Guide'
 import BottomNav from './components/BottomNav'
 
 const SKY = {
@@ -31,27 +32,27 @@ function Shell() {
 
   if (!authReady) {
     return (
-      <Phone>
-        <div className="flex h-full items-center justify-center bg-[#1a2a14] text-sm text-white/70">
+      <AppFrame>
+        <div className="flex h-dvh items-center justify-center bg-[#1a2a14] px-6 text-center text-sm text-white/70">
           Restoring your garden…
         </div>
-      </Phone>
+      </AppFrame>
     )
   }
 
   if (hasSupabase && !user) {
     return (
-      <Phone>
+      <AppFrame>
         <Auth />
-      </Phone>
+      </AppFrame>
     )
   }
 
   if (!state.onboardingComplete || screen === 'onboarding') {
     return (
-      <Phone>
+      <AppFrame>
         <Onboarding />
-      </Phone>
+      </AppFrame>
     )
   }
 
@@ -62,32 +63,33 @@ function Shell() {
     graveyard: <Graveyard />,
     history: <History />,
     replay: <History />,
+    guide: <Guide />,
   }[screen] || <Home />
 
+  const hideNav = screen === 'replay'
+
   return (
-    <Phone>
-      <div className={`flex h-full flex-col bg-gradient-to-b ${SKY[tod]} ${raining ? 'brightness-90' : ''}`}>
-        {status === 'critical' && (
-          <div className="bg-amber-500 px-4 py-2 text-center text-xs font-bold text-amber-950">
-            Critical — HP {Math.round(state.hp)}%. Complete habits before the season is lost.
-          </div>
-        )}
-        <div className="min-h-0 flex-1">{body}</div>
-        {screen !== 'replay' && screen !== 'graveyard' && (
-          <BottomNav screen={screen === 'replay' ? 'history' : screen} setScreen={setScreen} />
-        )}
+    <AppFrame>
+      <div className={`flex h-dvh max-h-dvh flex-col bg-gradient-to-b ${SKY[tod]} ${raining ? 'brightness-95' : ''} lg:flex-row`}>
+        {!hideNav && <BottomNav screen={screen === 'replay' ? 'history' : screen} setScreen={setScreen} />}
+        <div className="order-1 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:order-2">
+          {status === 'critical' && (
+            <div className="shrink-0 bg-amber-400 px-4 py-2 text-center text-sm font-bold text-amber-950">
+              Critical — HP {Math.round(state.hp)}%. Complete habits before the season is lost.
+            </div>
+          )}
+          <div className="min-h-0 flex-1 overflow-hidden">{body}</div>
+        </div>
         <p className="sr-only">Season day {day}</p>
       </div>
-    </Phone>
+    </AppFrame>
   )
 }
 
-function Phone({ children }) {
+function AppFrame({ children }) {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#0c1209] p-3">
-      <div className="relative h-[min(844px,100dvh)] w-full max-w-[390px] overflow-hidden rounded-[32px] border border-white/10 shadow-plant">
-        {children}
-      </div>
+    <div className="min-h-dvh w-full bg-[#0c1209] text-white">
+      <div className="mx-auto min-h-dvh w-full max-w-[1440px]">{children}</div>
     </div>
   )
 }

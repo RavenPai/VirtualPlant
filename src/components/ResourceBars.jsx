@@ -10,12 +10,14 @@ export default function ResourceBars({ resources }) {
       {Object.entries(META).map(([key, meta]) => {
         const value = Math.round(resources[key])
         return (
-          <div key={key} className="rounded-2xl bg-white/15 p-2.5 backdrop-blur-md">
-            <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-white/90">
-              <span>{meta.icon} {meta.label}</span>
-              <span>{value}%</span>
+          <div key={key} className="rounded-2xl bg-white/15 p-2.5 ring-1 ring-white/10 backdrop-blur-md">
+            <div className="mb-1.5 flex items-center justify-between gap-1 text-[11px] font-semibold text-white">
+              <span className="truncate">
+                {meta.icon} {meta.label}
+              </span>
+              <span className="tabular-nums">{value}%</span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-black/25">
+            <div className="h-2 overflow-hidden rounded-full bg-black/30">
               <div
                 className={`h-full bg-gradient-to-r ${meta.color}`}
                 style={{ width: `${value}%` }}

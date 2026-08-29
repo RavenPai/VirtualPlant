@@ -4,23 +4,38 @@
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "0 0 * * *" }]
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * *"
+            }
+          ]
         }
       },
       "id": "schedule-midnight",
       "name": "Every midnight",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/seasons?status=eq.active&select=*",
-        "headerParametersUi": {
-          "parameter": [
-            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
-            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/seasons?status=eq.active&select=*",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$vars.SUPABASE_KEY}}"
+            }
           ]
         }
       },
@@ -28,7 +43,10 @@
       "name": "Get active seasons",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [220, 0]
+      "position": [
+        220,
+        0
+      ]
     },
     {
       "parameters": {
@@ -39,12 +57,15 @@
       "name": "Get weather",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, 0]
+      "position": [
+        440,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.PYTHON_API_URL}}/v1/predict-tasks",
+        "url": "={{$vars.PYTHON_API_URL}}/v1/predict-tasks",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ resources: { water: $json.water, sun: $json.sun, fertilizer: $json.fertilizer }, weather: { tempC: $('Get weather').item.json.current.temperature_2m, cloudCover: $('Get weather').item.json.current.cloud_cover, code: $('Get weather').item.json.current.weather_code }, anchors: [] }) }}"
@@ -53,21 +74,37 @@
       "name": "Python ML task deck",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [660, 0]
+      "position": [
+        660,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/seasons?id=eq.{{$json.seasonId}}",
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/seasons?id=eq.{{$json.seasonId}}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ deck: $json.deck, deck_date: $now.toFormat('yyyy-MM-dd') }) }}",
-        "headerParametersUi": {
-          "parameter": [
-            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
-            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=minimal" }
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
           ]
         }
       },
@@ -75,13 +112,56 @@
       "name": "Store tasks in Supabase",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, 0]
+      "position": [
+        880,
+        0
+      ]
     }
   ],
   "connections": {
-    "Every midnight": { "main": [[{ "node": "Get active seasons", "type": "main", "index": 0 }]] },
-    "Get active seasons": { "main": [[{ "node": "Get weather", "type": "main", "index": 0 }]] },
-    "Get weather": { "main": [[{ "node": "Python ML task deck", "type": "main", "index": 0 }]] },
-    "Python ML task deck": { "main": [[{ "node": "Store tasks in Supabase", "type": "main", "index": 0 }]] }
+    "Every midnight": {
+      "main": [
+        [
+          {
+            "node": "Get active seasons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get active seasons": {
+      "main": [
+        [
+          {
+            "node": "Get weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get weather": {
+      "main": [
+        [
+          {
+            "node": "Python ML task deck",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Python ML task deck": {
+      "main": [
+        [
+          {
+            "node": "Store tasks in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   }
 }

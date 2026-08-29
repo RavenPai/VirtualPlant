@@ -5,3 +5,4 @@
 [build.environment]
   NODE_VERSION = "20"
   VITE_PYTHON_API_URL = "https://virtual-plant-python.onrender.com"
+  VITE_N8N_API_URL = "https://mayyuyamyetchare.app.n8n.cloud"

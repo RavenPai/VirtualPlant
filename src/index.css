@@ -4,17 +4,42 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
+html,
+body,
+#root {
   min-height: 100%;
+  height: 100%;
 }
 
 body {
   margin: 0;
   background: #0c1209;
+  color: #f4f7f0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+button,
+a,
+input,
+summary {
+  touch-action: manipulation;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #bef264;
+  outline-offset: 2px;
 }
 
 .vp-btn {
-  @apply w-full rounded-2xl bg-lime-300 py-3.5 text-center text-sm font-extrabold text-moss-900 disabled:opacity-40;
+  @apply flex min-h-12 w-full items-center justify-center rounded-2xl bg-lime-300 px-4 py-3 text-center text-sm font-extrabold text-moss-900 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-40;
 }
 
 .vp-input {
@@ -23,5 +48,10 @@ body {
 
 input[type='range'] {
   width: 100%;
+  accent-color: #bef264;
+  min-height: 1.5rem;
+}
+
+input[type='checkbox'] {
   accent-color: #bef264;
 }

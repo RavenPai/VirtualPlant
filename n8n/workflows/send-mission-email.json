@@ -1,0 +1,63 @@
+{
+  "name": "VP Send My Missions Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-mission-email",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook",
+      "name": "Mission webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "virtual-plant-send-mission-email"
+    },
+    {
+      "parameters": {
+        "jsCode": "function digest(input) {\n  const plant = String(input.plantName || input.plant_name || 'your plant').trim() || 'your plant';\n  const to = String(input.email || input.to || '').trim();\n  const deck = Array.isArray(input.deck) ? input.deck : [];\n  const rows = [];\n  for (const card of deck) {\n    const id = card.habitId || card.habit_id || '';\n    const name = card.name || (id ? id.replace(/-/g, ' ') : '');\n    if (!name) continue;\n    rows.push({ slot: card.slot || 'mission', name, done: Boolean(card.done) });\n  }\n  if (!rows.length) rows.push({ slot: 'mission', name: 'Drink water, move a little, and protect your sleep tonight', done: false });\n  const listHtml = rows.map((r) => `<li style=\"margin:0 0 10px;padding:10px 12px;background:#24361c;border-radius:12px;color:#f4f7f0\"><div style=\"font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#bef264\">${r.slot}</div><div style=\"font-size:16px;font-weight:700;margin-top:4px\">${r.name}</div></li>`).join('');\n  const listText = rows.map((r) => `- [${r.slot}] ${r.name}${r.done ? ' ✓' : ''}`).join('\\n');\n  return {\n    to,\n    subject: `Today's healthy-life missions for ${plant}`,\n    html: `<div style=\"font-family:Georgia,serif;background:#0c1209;padding:24px;color:#f4f7f0\"><p style=\"letter-spacing:.2em;text-transform:uppercase;font-size:11px;color:#c9ddb8\">Virtual Plant</p><h1 style=\"font-size:26px;margin:8px 0 12px\">Feed ${plant} with today's real life.</h1><p>Complete these on <a href=\"https://virtualplanty.netlify.app\" style=\"color:#bef264\">virtualplanty.netlify.app</a> to feed the tree.</p><ol style=\"padding:0;list-style:none;margin:20px 0\">${listHtml}</ol></div>`,\n    text: `Virtual Plant — today's missions for ${plant}\\n\\n${listText}\\n\\nOpen: https://virtualplanty.netlify.app`,\n  };\n}\nconst src = $json.body || $json;\nconst built = digest(src);\nreturn [{ json: built }];"
+      },
+      "id": "build-digest",
+      "name": "Build digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $vars.EMAIL_FROM, to: [$json.to], subject: $json.subject, html: $json.html, text: $json.text }) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$vars.RESEND_API_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "id": "send-resend",
+      "name": "Send with Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify({ ok: true }) }}" },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 0]
+    }
+  ],
+  "connections": {
+    "Mission webhook": { "main": [[{ "node": "Build digest", "type": "main", "index": 0 }]] },
+    "Build digest": { "main": [[{ "node": "Send with Resend", "type": "main", "index": 0 }]] },
+    "Send with Resend": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  }
+}

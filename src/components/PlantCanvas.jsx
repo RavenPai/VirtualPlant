@@ -25,15 +25,24 @@ function fruit(ctx, x, y, r, color) {
 
 function drawRain(ctx, w, h, t) {
   ctx.strokeStyle = 'rgba(210,230,255,0.45)'
-  ctx.lineWidth = 1.2
+  ctx.lineWidth = Math.max(1, w / 320)
   for (let i = 0; i < 42; i++) {
-    const x = ((i * 47 + t * 180) % w)
-    const y = ((i * 73 + t * 420) % h)
+    const x = (i * 47 + t * 180) % w
+    const y = (i * 73 + t * 420) % h
     ctx.beginPath()
     ctx.moveTo(x, y)
     ctx.lineTo(x + 4, y + 14)
     ctx.stroke()
   }
+}
+
+export function PlantStage({ frame, className = '', children }) {
+  return (
+    <div className={`relative isolate overflow-hidden rounded-3xl bg-black/20 ring-1 ring-white/20 ${className}`}>
+      <PlantCanvas className="absolute inset-0 block h-full w-full" frame={frame} />
+      {children}
+    </div>
+  )
 }
 
 export default function PlantCanvas({ frame, className }) {
@@ -46,11 +55,12 @@ export default function PlantCanvas({ frame, className }) {
     const ctx = canvas.getContext('2d')
     let raf
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     function resize() {
       const { width, height } = canvas.getBoundingClientRect()
-      canvas.width = width * dpr
-      canvas.height = height * dpr
+      canvas.width = Math.max(1, width * dpr)
+      canvas.height = Math.max(1, height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
     resize()
@@ -61,30 +71,45 @@ export default function PlantCanvas({ frame, className }) {
       const f = frameRef.current
       const w = canvas.getBoundingClientRect().width
       const h = canvas.getBoundingClientRect().height
+      if (w < 8 || h < 8) {
+        raf = requestAnimationFrame(draw)
+        return
+      }
       ctx.clearRect(0, 0, w, h)
 
       const status = f.status
       const stage = f.stage
-      const growth = (f.growthAccumulated || 8) / 100
+      const growth = Math.min(1, Math.max(0, (f.growthAccumulated || 8) / 100))
       const classification = f.classification
-      const sway = Math.sin(ts / 900) * 0.03
-      const soilY = h * 0.82
+      const sway = reduceMotion ? 0 : Math.sin(ts / 900) * 0.025
+
+      const padT = Math.max(10, h * 0.08)
+      const padB = Math.max(16, h * 0.14)
+      const padX = Math.max(10, w * 0.08)
+      const soilY = h - padB
+      const maxTreeH = Math.max(20, soilY - padT)
+      const unit = Math.min(w - padX * 2, maxTreeH)
+
+      ctx.fillStyle = 'rgba(28, 22, 12, 0.28)'
+      ctx.fillRect(0, soilY + 2, w, h - soilY)
 
       ctx.fillStyle = status === 'dead' || status === 'critical' ? '#5a4630' : '#6b4a2a'
       ctx.beginPath()
-      ctx.ellipse(w / 2, soilY + 8, w * 0.28, 16, 0, 0, Math.PI * 2)
+      ctx.ellipse(w / 2, soilY + unit * 0.02, Math.min(w * 0.34, unit * 0.42), Math.max(8, unit * 0.055), 0, 0, Math.PI * 2)
       ctx.fill()
       ctx.fillStyle = status === 'critical' || status === 'dead' ? '#7a5a32' : '#3e6b32'
       ctx.beginPath()
-      ctx.ellipse(w / 2, soilY + 2, w * 0.2, 10, 0, 0, Math.PI * 2)
+      ctx.ellipse(w / 2, soilY - unit * 0.01, Math.min(w * 0.24, unit * 0.3), Math.max(6, unit * 0.035), 0, 0, Math.PI * 2)
       ctx.fill()
 
       const baseX = w / 2
-      const heightMul = stage === 1 ? 0.28 : stage === 2 ? 0.48 : stage === 3 ? 0.68 : 0.82
-      const classMul = classification === 'stunted' ? 0.62 : classification === 'standard' ? 0.85 : 1
-      const treeH = h * heightMul * (0.55 + growth * 0.55) * (status === 'dead' ? 0.7 : classMul)
+      const heightMul = stage === 1 ? 0.36 : stage === 2 ? 0.56 : stage === 3 ? 0.74 : 0.9
+      const classMul = classification === 'stunted' ? 0.7 : classification === 'standard' ? 0.88 : 1
+      const treeH = maxTreeH * heightMul * (0.62 + growth * 0.38) * classMul * (status === 'dead' ? 0.75 : 1)
       const trunkTop = soilY - treeH
-      const trunkW = 6 + stage * 3.2 * classMul
+      const trunkW = Math.max(4, unit * (0.03 + stage * 0.012) * classMul)
+      const leafSize = Math.max(4, unit * 0.032)
+      const canopy = Math.min(w / 2 - padX - leafSize, treeH * 0.5, unit * (0.16 + stage * 0.07)) * (0.78 + growth * 0.22)
 
       ctx.save()
       ctx.translate(baseX, soilY)
@@ -97,23 +122,23 @@ export default function PlantCanvas({ frame, className }) {
       ctx.fillStyle = trunkGrad
       ctx.beginPath()
       ctx.moveTo(baseX - trunkW / 2, soilY)
-      ctx.quadraticCurveTo(baseX + sway * 80, (soilY + trunkTop) / 2, baseX - trunkW / 3, trunkTop)
+      ctx.quadraticCurveTo(baseX + sway * unit * 0.25, (soilY + trunkTop) / 2, baseX - trunkW / 3, trunkTop)
       ctx.lineTo(baseX + trunkW / 3, trunkTop)
-      ctx.quadraticCurveTo(baseX - sway * 80, (soilY + trunkTop) / 2, baseX + trunkW / 2, soilY)
+      ctx.quadraticCurveTo(baseX - sway * unit * 0.25, (soilY + trunkTop) / 2, baseX + trunkW / 2, soilY)
       ctx.closePath()
       ctx.fill()
 
       if (status !== 'dead' && stage >= 2) {
         ctx.strokeStyle = '#6a4024'
-        ctx.lineWidth = 3
+        ctx.lineWidth = Math.max(2, trunkW * 0.35)
         ctx.lineCap = 'round'
         ctx.beginPath()
         ctx.moveTo(baseX, trunkTop + treeH * 0.35)
-        ctx.quadraticCurveTo(baseX - 40, trunkTop + treeH * 0.2, baseX - 52, trunkTop + treeH * 0.08)
+        ctx.quadraticCurveTo(baseX - canopy * 0.7, trunkTop + treeH * 0.2, baseX - canopy * 0.85, trunkTop + treeH * 0.1)
         ctx.stroke()
         ctx.beginPath()
         ctx.moveTo(baseX, trunkTop + treeH * 0.42)
-        ctx.quadraticCurveTo(baseX + 36, trunkTop + treeH * 0.25, baseX + 50, trunkTop + treeH * 0.12)
+        ctx.quadraticCurveTo(baseX + canopy * 0.65, trunkTop + treeH * 0.25, baseX + canopy * 0.82, trunkTop + treeH * 0.14)
         ctx.stroke()
       }
 
@@ -129,32 +154,30 @@ export default function PlantCanvas({ frame, className }) {
 
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + sway
-        const spread = (18 + stage * 14) * (0.7 + growth)
-        const rx = Math.cos(a) * spread * (0.85 + (i % 5) * 0.08)
-        const ry = Math.sin(a * 1.3) * spread * 0.55 - 8
+        const rx = Math.cos(a) * canopy * (0.85 + (i % 5) * 0.08)
+        const ry = Math.sin(a * 1.3) * canopy * 0.55 - unit * 0.02
         const x = baseX + rx
-        const y = trunkTop + 10 + ry + wilt * 12
-        leaf(ctx, x, y, 7 + (i % 4) + stage, a * 0.4 + wilt, greens[i % greens.length], status === 'dead' ? 0.35 : 0.92)
+        const y = trunkTop + leafSize + ry + wilt * unit * 0.04
+        leaf(ctx, x, y, leafSize + (i % 4) * (unit * 0.004) + stage * (unit * 0.002), a * 0.4 + wilt, greens[i % greens.length], status === 'dead' ? 0.35 : 0.92)
       }
 
       if (stage === 4 && classification === 'grand' && status !== 'dead' && status !== 'critical') {
+        const fruitR = Math.max(3, unit * 0.018)
         for (let i = 0; i < 8; i++) {
           const a = (i / 8) * Math.PI * 2
-          const x = baseX + Math.cos(a) * 28
-          const y = trunkTop + 18 + Math.sin(a) * 16
-          fruit(ctx, x, y, 5, i % 2 ? '#e85d4c' : '#f2c14e')
+          fruit(ctx, baseX + Math.cos(a) * canopy * 0.45, trunkTop + canopy * 0.28 + Math.sin(a) * canopy * 0.28, fruitR, i % 2 ? '#e85d4c' : '#f2c14e')
         }
         for (let i = 0; i < 10; i++) {
           const a = (i / 10) * Math.PI * 2 + 0.3
-          leaf(ctx, baseX + Math.cos(a) * 22, trunkTop + Math.sin(a) * 12, 5, a, '#f4a6c3', 0.9)
+          leaf(ctx, baseX + Math.cos(a) * canopy * 0.38, trunkTop + Math.sin(a) * canopy * 0.22, leafSize * 0.7, a, '#f4a6c3', 0.9)
         }
       }
 
       if (stage === 1) {
         ctx.fillStyle = '#7dcf5c'
         ctx.beginPath()
-        ctx.ellipse(baseX - 8, soilY - 18, 5, 11, -0.5, 0, Math.PI * 2)
-        ctx.ellipse(baseX + 8, soilY - 18, 5, 11, 0.5, 0, Math.PI * 2)
+        ctx.ellipse(baseX - unit * 0.04, soilY - unit * 0.07, unit * 0.022, unit * 0.045, -0.5, 0, Math.PI * 2)
+        ctx.ellipse(baseX + unit * 0.04, soilY - unit * 0.07, unit * 0.022, unit * 0.045, 0.5, 0, Math.PI * 2)
         ctx.fill()
       }
 
@@ -170,5 +193,5 @@ export default function PlantCanvas({ frame, className }) {
     }
   }, [])
 
-  return <canvas ref={ref} className={className} />
+  return <canvas ref={ref} className={className} aria-hidden="true" />
 }

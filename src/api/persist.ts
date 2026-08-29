@@ -47,6 +47,8 @@ export async function persistState(state) {
     anchors: state.anchors,
     location: state.location,
     behavior: state.behavior,
+    email: user.email || null,
+    notify_missions: state.notifyMissions !== false,
     onboarding_complete: true,
     updated_at: new Date().toISOString(),
   })
@@ -129,6 +131,7 @@ export async function loadCloudState() {
     anchors: profile.anchors || [],
     location: profile.location,
     behavior: profile.behavior || { bedtimeScreenMins: 20, sleepHours: 7.5 },
+    notifyMissions: profile.notify_missions !== false,
     dailySnapshots: (snapRows || []).map(mapSnapshot),
     yard: (archives || []).filter((r) => r.kind === 'yard').map(mapArchive),
     graveyard: (archives || []).filter((r) => r.kind === 'graveyard').map(mapArchive),

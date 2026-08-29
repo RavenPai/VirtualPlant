@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { notifyHabitComplete } from '../api/n8n'
+import { notifyHabitComplete, emailTodayMissions } from '../api/n8n'
 import { hasPython, hasSupabase } from '../api/env'
 import { loadCloudState, persistState } from '../api/persist'
-import { predictTasks } from '../api/python'
+import { predictTasks, sendMissionEmail } from '../api/python'
 import {
+  getAccessToken,
   getCurrentUser,
   getSupabase,
   signInWithPassword,
@@ -193,6 +194,22 @@ export function GameProvider({ children }) {
     setScreen('auth')
   }, [user])
 
+  const setNotifyMissions = useCallback((notifyMissions) => {
+    setState((s) => ({ ...s, notifyMissions: Boolean(notifyMissions) }))
+  }, [])
+
+  const emailMissions = useCallback(async () => {
+    if (!user?.email) return false
+    const payload = {
+      email: user.email,
+      plantName: state.plantName,
+      deck: state.deck,
+    }
+    const token = await getAccessToken()
+    if (await sendMissionEmail(payload, token)) return true
+    return emailTodayMissions(payload)
+  }, [user, state.plantName, state.deck])
+
   const finishOnboarding = useCallback((plantName, anchors) => {
     const next = simulateTick({
       ...freshSeason(),
@@ -252,6 +269,8 @@ export function GameProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      setNotifyMissions,
+      emailMissions,
       finishOnboarding,
       doTask,
       setBehavior,
@@ -267,6 +286,8 @@ export function GameProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      setNotifyMissions,
+      emailMissions,
       finishOnboarding,
       doTask,
       setBehavior,

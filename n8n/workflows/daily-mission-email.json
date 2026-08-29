@@ -1,0 +1,83 @@
+{
+  "name": "VP Daily Mission Email",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "30 1 * * *" }]
+        }
+      },
+      "id": "every-morning",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/profiles?select=id,email,plant_name,notify_missions,seasons(deck,deck_date,status)&onboarding_complete=eq.true&notify_missions=eq.true&email=not.is.null&email=neq.",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$vars.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$vars.SUPABASE_KEY}}" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        }
+      },
+      "id": "get-profiles",
+      "name": "Get gardeners",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const profiles = [];\nfor (const item of $input.all()) {\n  const raw = item.json;\n  if (Array.isArray(raw)) profiles.push(...raw);\n  else if (Array.isArray(raw.data)) profiles.push(...raw.data);\n  else if (raw.id || raw.email) profiles.push(raw);\n}\nreturn profiles\n  .filter((p) => p && typeof p.email === 'string' && p.email.includes('@') && p.notify_missions !== false)\n  .map((p) => {\n    const seasons = Array.isArray(p.seasons) ? p.seasons : [];\n    const active = seasons.find((s) => s && s.status === 'active') || seasons[0] || {};\n    return { json: { email: p.email, plantName: p.plant_name || 'your plant', deck: active.deck || [] } };\n  });"
+      },
+      "id": "each-gardener",
+      "name": "Each gardener",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "function digest(input) {\n  const plant = String(input.plantName || input.plant_name || 'your plant').trim() || 'your plant';\n  const to = String(input.email || input.to || '').trim();\n  const deck = Array.isArray(input.deck) ? input.deck : [];\n  const rows = [];\n  for (const card of deck) {\n    const id = card.habitId || card.habit_id || '';\n    const name = card.name || (id ? id.replace(/-/g, ' ') : '');\n    if (!name) continue;\n    rows.push({ slot: card.slot || 'mission', name, done: Boolean(card.done) });\n  }\n  if (!rows.length) rows.push({ slot: 'mission', name: 'Drink water, move a little, and protect your sleep tonight', done: false });\n  const listHtml = rows.map((r) => `<li style=\"margin:0 0 10px;padding:10px 12px;background:#24361c;border-radius:12px;color:#f4f7f0\"><div style=\"font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#bef264\">${r.slot}</div><div style=\"font-size:16px;font-weight:700;margin-top:4px\">${r.name}</div></li>`).join('');\n  const listText = rows.map((r) => `- [${r.slot}] ${r.name}${r.done ? ' ✓' : ''}`).join('\\n');\n  return {\n    to,\n    subject: `Today's healthy-life missions for ${plant}`,\n    html: `<div style=\"font-family:Georgia,serif;background:#0c1209;padding:24px;color:#f4f7f0\"><p style=\"letter-spacing:.2em;text-transform:uppercase;font-size:11px;color:#c9ddb8\">Virtual Plant</p><h1 style=\"font-size:26px;margin:8px 0 12px\">Feed ${plant} with today's real life.</h1><p>Complete these on <a href=\"https://virtualplanty.netlify.app\" style=\"color:#bef264\">virtualplanty.netlify.app</a> to feed the tree.</p><ol style=\"padding:0;list-style:none;margin:20px 0\">${listHtml}</ol></div>`,\n    text: `Virtual Plant — today's missions for ${plant}\\n\\n${listText}\\n\\nOpen: https://virtualplanty.netlify.app`,\n  };\n}\nconst built = digest($json);\nif (!built.to || built.to.indexOf('@') < 0) return [];\nreturn [{ json: built }];"
+      },
+      "id": "build-digest",
+      "name": "Build digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $vars.EMAIL_FROM, to: [$json.to], subject: $json.subject, html: $json.html, text: $json.text }) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{$vars.RESEND_API_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "id": "send-resend",
+      "name": "Send with Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Every morning": { "main": [[{ "node": "Get gardeners", "type": "main", "index": 0 }]] },
+    "Get gardeners": { "main": [[{ "node": "Each gardener", "type": "main", "index": 0 }]] },
+    "Each gardener": { "main": [[{ "node": "Build digest", "type": "main", "index": 0 }]] },
+    "Build digest": { "main": [[{ "node": "Send with Resend", "type": "main", "index": 0 }]] }
+  }
+}

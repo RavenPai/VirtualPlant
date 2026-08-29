@@ -3,22 +3,39 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "hours", "hoursInterval": 1 }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
       },
       "id": "hourly",
       "name": "Every hour",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/seasons?status=eq.active&select=*",
-        "headerParametersUi": {
-          "parameter": [
-            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
-            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/seasons?status=eq.active&select=*",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$vars.SUPABASE_KEY}}"
+            }
           ]
         }
       },
@@ -26,12 +43,15 @@
       "name": "Get active seasons",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [240, 0]
+      "position": [
+        240,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.PYTHON_API_URL}}/v1/tick",
+        "url": "={{$vars.PYTHON_API_URL}}/v1/tick",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ state: { resources: { water: $json.water, sun: $json.sun, fertilizer: $json.fertilizer }, hp: $json.hp, lastTick: new Date($json.last_tick).getTime(), growthAccumulated: $json.growth_accumulated, seasonStart: new Date($json.season_start).getTime(), deck: $json.deck, deckDate: $json.deck_date, weather: $json.weather }, nowMs: Date.now() }) }}"
@@ -40,20 +60,33 @@
       "name": "Python decay tick",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [480, 0]
+      "position": [
+        480,
+        0
+      ]
     },
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/seasons?id=eq.{{$('Get active seasons').item.json.id}}",
+        "url": "={{$vars.SUPABASE_URL}}/rest/v1/seasons?id=eq.{{$('Get active seasons').item.json.id}}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ water: $json.resources.water, sun: $json.resources.sun, fertilizer: $json.resources.fertilizer, hp: $json.hp, last_tick: new Date($json.lastTick).toISOString(), growth_accumulated: $json.growthAccumulated, deck: $json.deck, deck_date: $json.deckDate }) }}",
-        "headerParametersUi": {
-          "parameter": [
-            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
-            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
-            { "name": "Content-Type", "value": "application/json" }
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$vars.SUPABASE_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         }
       },
@@ -61,12 +94,45 @@
       "name": "Save tick to Supabase",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [720, 0]
+      "position": [
+        720,
+        0
+      ]
     }
   ],
   "connections": {
-    "Every hour": { "main": [[{ "node": "Get active seasons", "type": "main", "index": 0 }]] },
-    "Get active seasons": { "main": [[{ "node": "Python decay tick", "type": "main", "index": 0 }]] },
-    "Python decay tick": { "main": [[{ "node": "Save tick to Supabase", "type": "main", "index": 0 }]] }
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Get active seasons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get active seasons": {
+      "main": [
+        [
+          {
+            "node": "Python decay tick",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Python decay tick": {
+      "main": [
+        [
+          {
+            "node": "Save tick to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   }
 }
