@@ -21,6 +21,7 @@ import {
   saveState,
   simulateTick,
   freshSeason,
+  timeOfDay,
 } from './engine'
 import { detectLocation, fetchWeather } from './weather'
 
@@ -122,7 +123,7 @@ export function GameProvider({ children }) {
               tempC: 27,
               cloudCover: 35,
               code: 1,
-              isDay: true,
+              isDay: !['night', 'dusk'].includes(timeOfDay()),
               precipitation: 0,
               fetchedAt: Date.now(),
             },

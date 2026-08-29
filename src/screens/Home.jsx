@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { PlantStage } from '../components/PlantCanvas'
+import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 import ResourceBars from '../components/ResourceBars'
 import { useGame } from '../game/GameContext'
 import {
@@ -36,6 +37,19 @@ export default function Home() {
   const tod = timeOfDay()
   const kind = weatherKind(state.weather?.code ?? 0, state.weather?.tempC ?? 22)
   const growth = dailyGrowthRate(state.resources)
+  const plantFrame = {
+    status,
+    stage,
+    day,
+    hp: state.hp,
+    resources: state.resources,
+    growthAccumulated: state.growthAccumulated,
+    classification,
+    weatherKind: kind,
+    weather: state.weather,
+    timeOfDay: tod,
+    scenicBackdrop: true,
+  }
 
   async function sendMail() {
     setMailBusy(true)
@@ -68,16 +82,9 @@ export default function Home() {
 
       <div className="grid min-h-0 flex-1 grid-rows-[minmax(220px,1fr)_minmax(0,42%)] lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,24rem)] lg:grid-rows-1 lg:gap-6 lg:px-8 lg:pb-6 lg:pt-4">
         <section className="relative mx-4 mt-3 min-h-[220px] sm:mx-6 sm:min-h-0 lg:mx-0 lg:mt-0">
-          <PlantStage
-            className="absolute inset-0 h-full w-full"
-            frame={{
-              status,
-              stage,
-              growthAccumulated: state.growthAccumulated,
-              classification,
-              weatherKind: kind,
-            }}
-          />
+          <PlantStage className="absolute inset-0 h-full w-full" frame={plantFrame}>
+            <PlantCanvas className="h-full w-full" frame={plantFrame} />
+          </PlantStage>
         </section>
 
         <aside className="min-h-0 space-y-3 overflow-y-auto px-4 py-3 sm:px-6 lg:px-0 lg:py-0">

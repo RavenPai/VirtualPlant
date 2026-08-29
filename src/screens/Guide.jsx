@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { PlantStage } from '../components/PlantCanvas'
+import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 
 const TABS = [
   { id: 'use', label: 'How to use' },
@@ -55,17 +56,19 @@ const LINKS = [
 ]
 
 function MiniPlant({ stage, growth, classification = null, status = 'thriving' }) {
+  const frame = {
+    status,
+    stage,
+    growthAccumulated: growth,
+    classification,
+    weatherKind: 'clear',
+    timeOfDay: 'afternoon',
+    scenicBackdrop: true,
+  }
   return (
-    <PlantStage
-      className="h-44 w-full sm:h-52"
-      frame={{
-        status,
-        stage,
-        growthAccumulated: growth,
-        classification,
-        weatherKind: 'clear',
-      }}
-    />
+    <PlantStage className="h-44 w-full sm:h-52" frame={frame}>
+      <PlantCanvas className="h-full w-full" frame={frame} />
+    </PlantStage>
   )
 }
 

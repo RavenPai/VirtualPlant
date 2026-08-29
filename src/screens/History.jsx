@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { PlantStage } from '../components/PlantCanvas'
+import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 import { useGame } from '../game/GameContext'
-import { classificationLabel, growthStage, weatherKind } from '../game/engine'
+import { classificationLabel, growthStage, timeOfDay, weatherKind } from '../game/engine'
 
 export default function History() {
   const { state, replay, setScreen, setReplay } = useGame()
@@ -35,14 +36,29 @@ export default function History() {
   const frameSnap = snaps[index] || snaps[0]
   const frame = useMemo(() => {
     if (!frameSnap) {
-      return { status: 'thriving', stage: 1, growthAccumulated: 8, classification: record.classification }
+      return {
+        status: 'thriving',
+        stage: 1,
+        day: 1,
+        growthAccumulated: 8,
+        classification: record.classification,
+        weatherKind: 'clear',
+        timeOfDay: timeOfDay(),
+        scenicBackdrop: true,
+      }
     }
     return {
       status: frameSnap.status,
       stage: frameSnap.stage || growthStage(frameSnap.day || 1),
+      day: frameSnap.day,
+      hp: frameSnap.hp,
+      resources: frameSnap.resources,
       growthAccumulated: frameSnap.growthAccumulated,
       classification: record.classification,
       weatherKind: weatherKind(frameSnap.weather?.code ?? 0, frameSnap.weather?.tempC ?? 22),
+      weather: frameSnap.weather,
+      timeOfDay: frameSnap.timeOfDay || timeOfDay(),
+      scenicBackdrop: true,
     }
   }, [frameSnap, record.classification])
 
@@ -68,7 +84,9 @@ export default function History() {
 
       <div className="mt-3 grid min-h-0 flex-1 grid-rows-[minmax(240px,1fr)_minmax(0,38%)] gap-4 overflow-hidden lg:grid-cols-[minmax(0,1.3fr)_minmax(240px,20rem)] lg:grid-rows-1">
         <div className="flex min-h-0 flex-col">
-          <PlantStage className="min-h-[240px] w-full flex-1 sm:min-h-[280px]" frame={frame} />
+          <PlantStage className="min-h-[240px] w-full flex-1 sm:min-h-[280px]" frame={frame}>
+            <PlantCanvas className="h-full w-full" frame={frame} />
+          </PlantStage>
           <input
             className="mt-3"
             type="range"

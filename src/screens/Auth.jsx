@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import PlantCanvas from '../components/PlantCanvas'
+import PlantStage from '../components/PlantStage'
 import { useGame } from '../game/GameContext'
+import { timeOfDay } from '../game/engine'
 
 export default function Auth() {
   const { signIn, signUp } = useGame()
@@ -12,6 +15,7 @@ export default function Auth() {
   const [busy, setBusy] = useState(false)
 
   const isSignup = mode === 'signup'
+  const tod = timeOfDay()
 
   async function submit(event) {
     event.preventDefault()
@@ -55,7 +59,23 @@ export default function Auth() {
             : 'Log in to restore your plant, habits, and yard from Supabase.'}
         </p>
 
-        <form className="mt-8 flex flex-1 flex-col" onSubmit={submit}>
+        <div className="mx-auto mt-5 h-32 w-full max-w-[220px] sm:h-40">
+          <PlantStage className="h-full w-full" frame={{ weatherKind: 'clear', timeOfDay: tod }}>
+            <PlantCanvas
+              className="h-full w-full"
+              frame={{
+                growth01: 0.42,
+                neglect01: 0,
+                status: 'thriving',
+                weatherKind: 'clear',
+                timeOfDay: tod,
+                scenicBackdrop: true,
+              }}
+            />
+          </PlantStage>
+        </div>
+
+        <form className="mt-6 flex flex-1 flex-col" onSubmit={submit}>
           <label className="text-xs uppercase tracking-widest text-white/60" htmlFor="auth-email">Email</label>
           <input
             id="auth-email"
