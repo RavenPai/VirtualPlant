@@ -1,0 +1,17 @@
+{
+  "name": "Virtual Plant",
+  "short_name": "Virtual Plant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c1209",
+  "theme_color": "#1a2a14",
+  "description": "Gamified well-being and digital cultivation.",
+  "icons": [
+    {
+      "src": "/plant.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
