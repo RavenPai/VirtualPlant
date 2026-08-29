@@ -17,6 +17,10 @@ body {
   @apply w-full rounded-2xl bg-lime-300 py-3.5 text-center text-sm font-extrabold text-moss-900 disabled:opacity-40;
 }
 
+.vp-input {
+  @apply w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-base text-white outline-none placeholder:text-white/35;
+}
+
 input[type='range'] {
   width: 100%;
   accent-color: #bef264;

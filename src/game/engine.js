@@ -369,9 +369,13 @@ export function simulateTick(state, now = Date.now()) {
   return next
 }
 
-export function loadState() {
+export function storageKeyFor(userId) {
+  return userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY
+}
+
+export function loadState(userId) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKeyFor(userId))
     if (!raw) return createInitialState()
     const parsed = JSON.parse(raw)
     return simulateTick({ ...createInitialState(), ...parsed }, Date.now())
@@ -380,6 +384,10 @@ export function loadState() {
   }
 }
 
-export function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+export function saveState(state, userId) {
+  localStorage.setItem(storageKeyFor(userId), JSON.stringify(state))
+}
+
+export function clearSavedState(userId) {
+  localStorage.removeItem(storageKeyFor(userId))
 }

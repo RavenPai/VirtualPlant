@@ -1,13 +1,44 @@
 import { HABIT_MAP } from '../game/habits'
-import { ensureSession, getSupabase } from './supabase'
+import { getCurrentUser, getSupabase } from './supabase'
 
-function num(n: unknown) {
+function num(n) {
   return Number(n)
+}
+
+function mapSnapshot(row) {
+  return {
+    day: row.day,
+    date: row.snapshot_date,
+    health: num(row.health),
+    hp: num(row.hp),
+    resources: row.resources,
+    status: row.plant_status,
+    stage: row.stage,
+    growthAccumulated: num(row.growth_accumulated),
+    weather: row.weather,
+    timeOfDay: row.time_of_day,
+  }
+}
+
+function mapArchive(row) {
+  return {
+    id: row.id,
+    reason: row.reason,
+    plantName: row.plant_name,
+    quarter: { id: row.quarter_id, name: row.quarter_name },
+    year: row.year,
+    classification: row.classification,
+    cSeason: num(row.c_season),
+    habitsCompleted: row.habits_completed,
+    snapshots: row.snapshots || [],
+    endedAt: new Date(row.ended_at).getTime(),
+    seasonStart: new Date(row.season_start).getTime(),
+  }
 }
 
 export async function persistState(state) {
   const supabase = getSupabase()
-  const user = await ensureSession()
+  const user = await getCurrentUser()
   if (!supabase || !user || !state.onboardingComplete) return
 
   await supabase.from('profiles').upsert({
@@ -71,6 +102,43 @@ export async function persistState(state) {
   }
 }
 
+export async function loadCloudState() {
+  const supabase = getSupabase()
+  const user = await getCurrentUser()
+  if (!supabase || !user) return null
+
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+  if (!profile?.onboarding_complete) return null
+
+  const { data: season } = await supabase
+    .from('seasons')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  const { data: snapRows } = season
+    ? await supabase.from('daily_snapshots').select('*').eq('season_id', season.id).order('snapshot_date')
+    : { data: [] }
+
+  const { data: archives } = await supabase.from('archived_trees').select('*').eq('user_id', user.id)
+
+  const extras = {
+    onboardingComplete: true,
+    plantName: profile.plant_name,
+    anchors: profile.anchors || [],
+    location: profile.location,
+    behavior: profile.behavior || { bedtimeScreenMins: 20, sleepHours: 7.5 },
+    dailySnapshots: (snapRows || []).map(mapSnapshot),
+    yard: (archives || []).filter((r) => r.kind === 'yard').map(mapArchive),
+    graveyard: (archives || []).filter((r) => r.kind === 'graveyard').map(mapArchive),
+    milestones: [],
+  }
+
+  if (!season) return extras
+  return seasonFromRow(season, extras)
+}
+
 export function seasonFromRow(row, extras) {
   return {
     ...extras,
@@ -90,6 +158,6 @@ export function seasonFromRow(row, extras) {
   }
 }
 
-export function habitMeta(habitId: string) {
+export function habitMeta(habitId) {
   return HABIT_MAP[habitId]
 }

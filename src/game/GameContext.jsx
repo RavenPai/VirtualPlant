@@ -1,12 +1,20 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { notifyHabitComplete } from '../api/n8n'
-import { persistState } from '../api/persist'
-import { hasPython } from '../api/env'
+import { hasPython, hasSupabase } from '../api/env'
+import { loadCloudState, persistState } from '../api/persist'
 import { predictTasks } from '../api/python'
-import { ensureSession } from '../api/supabase'
+import {
+  getCurrentUser,
+  getSupabase,
+  signInWithPassword,
+  signOut as supabaseSignOut,
+  signUpWithPassword,
+} from '../api/supabase'
 import { HABIT_MAP } from './habits'
 import {
+  clearSavedState,
   completeTask,
+  createInitialState,
   loadState,
   localDateKey,
   saveState,
@@ -18,21 +26,75 @@ import { detectLocation, fetchWeather } from './weather'
 const GameContext = createContext(null)
 
 export function GameProvider({ children }) {
-  const [state, setState] = useState(() => loadState())
-  const [screen, setScreen] = useState(state.onboardingComplete ? 'home' : 'onboarding')
+  const [user, setUser] = useState(null)
+  const [authReady, setAuthReady] = useState(!hasSupabase)
+  const [state, setState] = useState(() => (hasSupabase ? createInitialState() : loadState()))
+  const [screen, setScreen] = useState(() => {
+    if (hasSupabase) return 'auth'
+    return loadState().onboardingComplete ? 'home' : 'onboarding'
+  })
   const [replay, setReplay] = useState(null)
 
-  useEffect(() => {
-    ensureSession()
+  const applyUser = useCallback(async (nextUser) => {
+    setUser(nextUser)
+    if (!nextUser) {
+      setState(createInitialState())
+      setScreen('auth')
+      return
+    }
+    const cloud = await loadCloudState()
+    if (cloud) {
+      const next = simulateTick(cloud)
+      setState(next)
+      saveState(next, nextUser.id)
+      setScreen('home')
+      return
+    }
+    const local = loadState(nextUser.id)
+    if (local.onboardingComplete) {
+      setState(local)
+      setScreen('home')
+      return
+    }
+    setState(createInitialState())
+    setScreen('onboarding')
   }, [])
 
   useEffect(() => {
-    saveState(state)
+    if (!hasSupabase) return undefined
+    const supabase = getSupabase()
+    let cancelled = false
+
+    getCurrentUser().then(async (current) => {
+      if (cancelled) return
+      await applyUser(current)
+      if (!cancelled) setAuthReady(true)
+    })
+
+    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (cancelled) return
+      if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return
+      const next = session?.user && !session.user.is_anonymous ? session.user : null
+      await applyUser(next)
+      setAuthReady(true)
+    })
+
+    return () => {
+      cancelled = true
+      data.subscription.unsubscribe()
+    }
+  }, [applyUser])
+
+  useEffect(() => {
+    if (!authReady) return
+    if (hasSupabase && !user) return
+    saveState(state, user?.id)
+    if (!state.onboardingComplete) return
     const id = setTimeout(() => {
       persistState(state)
     }, 800)
     return () => clearTimeout(id)
-  }, [state])
+  }, [state, authReady, user])
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -42,6 +104,7 @@ export function GameProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    if (hasSupabase && !user) return undefined
     let cancelled = false
     async function loadWeather() {
       try {
@@ -72,7 +135,7 @@ export function GameProvider({ children }) {
       cancelled = true
       clearInterval(id)
     }
-  }, [state.location?.lat, state.location?.lon])
+  }, [state.location?.lat, state.location?.lon, user])
 
   useEffect(() => {
     if (!hasPython || !state.onboardingComplete) return
@@ -114,6 +177,22 @@ export function GameProvider({ children }) {
     state.weather?.code,
   ])
 
+  const signIn = useCallback(async (email, password) => {
+    return signInWithPassword(email, password)
+  }, [])
+
+  const signUp = useCallback(async (email, password) => {
+    return signUpWithPassword(email, password)
+  }, [])
+
+  const signOut = useCallback(async () => {
+    if (user?.id) clearSavedState(user.id)
+    await supabaseSignOut()
+    setUser(null)
+    setState(createInitialState())
+    setScreen('auth')
+  }, [user])
+
   const finishOnboarding = useCallback((plantName, anchors) => {
     const next = simulateTick({
       ...freshSeason(),
@@ -125,26 +204,34 @@ export function GameProvider({ children }) {
     setScreen('home')
   }, [])
 
-  const doTask = useCallback((habitId) => {
-    setState((s) => {
-      const next = simulateTick(completeTask(s, habitId))
-      const habit = HABIT_MAP[habitId]
-      notifyHabitComplete({
-        habitId,
-        state: {
-          resources: next.resources,
-          hp: next.hp,
-          lastTick: next.lastTick,
-          growthAccumulated: next.growthAccumulated,
-          seasonStart: next.seasonStart,
-        },
-        log: habit
-          ? { habit_id: habitId, resource: habit.resource, gain: habit.gain }
-          : { habit_id: habitId },
+  const doTask = useCallback(
+    (habitId) => {
+      setState((s) => {
+        const next = simulateTick(completeTask(s, habitId))
+        const habit = HABIT_MAP[habitId]
+        notifyHabitComplete({
+          habitId,
+          state: {
+            resources: next.resources,
+            hp: next.hp,
+            lastTick: next.lastTick,
+            growthAccumulated: next.growthAccumulated,
+            seasonStart: next.seasonStart,
+          },
+          log: habit
+            ? {
+                habit_id: habitId,
+                resource: habit.resource,
+                gain: habit.gain,
+                user_id: user?.id,
+              }
+            : { habit_id: habitId, user_id: user?.id },
+        })
+        return next
       })
-      return next
-    })
-  }, [])
+    },
+    [user],
+  )
 
   const setBehavior = useCallback((behavior) => {
     setState((s) => simulateTick({ ...s, behavior: { ...s.behavior, ...behavior } }))
@@ -156,8 +243,36 @@ export function GameProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ state, screen, setScreen, finishOnboarding, doTask, setBehavior, replay, openReplay, setReplay }),
-    [state, screen, finishOnboarding, doTask, setBehavior, replay, openReplay],
+    () => ({
+      state,
+      screen,
+      setScreen,
+      user,
+      authReady,
+      signIn,
+      signUp,
+      signOut,
+      finishOnboarding,
+      doTask,
+      setBehavior,
+      replay,
+      openReplay,
+      setReplay,
+    }),
+    [
+      state,
+      screen,
+      user,
+      authReady,
+      signIn,
+      signUp,
+      signOut,
+      finishOnboarding,
+      doTask,
+      setBehavior,
+      replay,
+      openReplay,
+    ],
   )
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

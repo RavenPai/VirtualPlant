@@ -3,7 +3,7 @@ import { HABIT_MAP, ANCHOR_CANDIDATES } from '../game/habits'
 import { useGame } from '../game/GameContext'
 
 export default function Onboarding() {
-  const { finishOnboarding } = useGame()
+  const { finishOnboarding, user, signOut } = useGame()
   const [name, setName] = useState('Sprout')
   const [anchors, setAnchors] = useState([])
   const [step, setStep] = useState(0)
@@ -27,6 +27,14 @@ export default function Onboarding() {
               Water, sun, and fertilizer decay every hour. Your habits replenish them. After 90 days, the tree
               retires to your Annual Yard.
             </p>
+            {user?.email && (
+              <p className="mt-3 text-xs text-white/55">
+                Signed in as {user.email}.{' '}
+                <button type="button" className="underline" onClick={() => signOut()}>
+                  Use a different account
+                </button>
+              </p>
+            )}
           </div>
           <button type="button" className="vp-btn" onClick={() => setStep(1)}>
             Begin cultivation

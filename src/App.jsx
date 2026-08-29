@@ -1,4 +1,5 @@
 import { GameProvider, useGame } from './game/GameContext'
+import { hasSupabase } from './api/env'
 import {
   plantState,
   seasonDay,
@@ -6,6 +7,7 @@ import {
   weatherKind,
 } from './game/engine'
 import Onboarding from './screens/Onboarding'
+import Auth from './screens/Auth'
 import Home from './screens/Home'
 import Today from './screens/Today'
 import Yard from './screens/Yard'
@@ -21,11 +23,29 @@ const SKY = {
 }
 
 function Shell() {
-  const { state, screen, setScreen } = useGame()
+  const { state, screen, setScreen, user, authReady } = useGame()
   const tod = timeOfDay()
   const status = plantState(state.resources, state.hp)
   const raining = weatherKind(state.weather?.code ?? 0, state.weather?.tempC ?? 22) === 'rain'
   const day = seasonDay(state.seasonStart)
+
+  if (!authReady) {
+    return (
+      <Phone>
+        <div className="flex h-full items-center justify-center bg-[#1a2a14] text-sm text-white/70">
+          Restoring your garden…
+        </div>
+      </Phone>
+    )
+  }
+
+  if (hasSupabase && !user) {
+    return (
+      <Phone>
+        <Auth />
+      </Phone>
+    )
+  }
 
   if (!state.onboardingComplete || screen === 'onboarding') {
     return (

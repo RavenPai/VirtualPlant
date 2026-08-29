@@ -24,7 +24,7 @@ const STATUS_COPY = {
 }
 
 export default function Home() {
-  const { state, setScreen } = useGame()
+  const { state, setScreen, user, signOut } = useGame()
   const day = seasonDay(state.seasonStart)
   const stage = growthStage(day)
   const status = plantState(state.resources, state.hp)
@@ -91,6 +91,14 @@ export default function Home() {
           Today’s 6-task deck
         </button>
         <p className="mt-2 text-center text-[10px] uppercase tracking-widest text-white/50">{tod} light</p>
+        {user?.email && (
+          <div className="mt-2 flex items-center justify-between text-[11px] text-white/55">
+            <span className="truncate pr-2">{user.email}</span>
+            <button type="button" className="shrink-0 underline-offset-2 hover:underline" onClick={() => signOut()}>
+              Sign out
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
