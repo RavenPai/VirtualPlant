@@ -6,3 +6,18 @@
   NODE_VERSION = "20"
   VITE_PYTHON_API_URL = "https://virtual-plant-python.onrender.com"
   VITE_N8N_API_URL = "https://mayyuyamyetchare.app.n8n.cloud"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

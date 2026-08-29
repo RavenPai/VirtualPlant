@@ -1,9 +1,22 @@
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open('vp-beta-1').then((cache) => cache.addAll(['/'])))
+  event.waitUntil(self.skipWaiting())
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys()
+      await Promise.all(keys.map((key) => caches.delete(key)))
+      await self.clients.claim()
+      const windows = await self.clients.matchAll({ type: 'window' })
+      await Promise.all(windows.map((client) => client.navigate(client.url)))
+    })(),
+  )
 })
 
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request)),
-  )
+  if (event.request.method !== 'GET') return
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(fetch(event.request))
+  }
 })

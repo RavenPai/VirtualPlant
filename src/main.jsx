@@ -11,6 +11,7 @@ createRoot(document.getElementById('root')).render(
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
+    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
     navigator.serviceWorker.register('/sw.js')
   })
 }
