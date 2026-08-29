@@ -17,4 +17,6 @@ app.include_router(plant_router)
 
 @app.get("/health")
 def health():
-    return {"ok": True, "service": "virtual-plant-python"}
+    from app.services.dataset_ml import dataset_status
+
+    return {"ok": True, "service": "virtual-plant-python", "datasets": dataset_status()}

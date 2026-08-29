@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any
 
+from app.services.dataset_ml import habit_dataset_multiplier
 from app.services.habits import HABIT_MAP, HABITS
 
 SEASON_DAYS = 90
@@ -148,14 +149,14 @@ def weather_tasks(weather: dict | None) -> list[dict]:
 
 
 def ml_priority_scores(resources: dict, behavior: dict | None) -> list[dict]:
-    """Deficit-weighted priority scores (same 6-task product rule, Python/ML slot)."""
+    """Deficit-weighted scores, amplified by Kaggle sleep/doomscroll + lifestyle evidence."""
     behavior = behavior or {}
     doom_boost = 1.15 if behavior.get("bedtimeScreenMins", 0) > 45 else 1.0
     sleep_boost = 1.1 if behavior.get("sleepHours", 7) < 7 else 1.0
     ranked = []
     for habit in HABITS:
         deficit = 100 - resources[habit["resource"]]
-        score = deficit * habit["gain"]
+        score = deficit * habit["gain"] * habit_dataset_multiplier(habit["id"], behavior)
         if habit["resource"] == "fertilizer":
             score *= doom_boost * sleep_boost
         ranked.append({**habit, "score": score})

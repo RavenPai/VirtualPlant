@@ -2,8 +2,14 @@ from fastapi import APIRouter
 
 from app.models.schemas import PlantState, PredictRequest, TickRequest
 from app.services import plant_engine as engine
+from app.services.dataset_ml import dataset_status, user_risk_profile
 
 router = APIRouter(prefix="/v1")
+
+
+@router.get("/datasets")
+def datasets():
+    return dataset_status()
 
 
 @router.post("/decay")
@@ -54,6 +60,8 @@ def predict_tasks(body: PredictRequest):
         "deck": deck,
         "rule": "2 anchors + 2 weather + 2 AI priority",
         "priorityScores": [{"id": h["id"], "score": h["score"]} for h in scores],
+        "datasets": dataset_status(),
+        "userRisk": user_risk_profile(state.get("behavior")),
     }
 
 

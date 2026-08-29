@@ -1,0 +1,491 @@
+{
+  "generatedAt": "2026-08-29T06:20:07.831588+00:00",
+  "sources": [
+    {
+      "handle": "harpartapsingh13/sleep-and-doomscrolling-habits-dataset",
+      "file": "sleep_doomscrolling_habits.csv",
+      "rows": 1000,
+      "role": "Primary scorer: bedtime screens, doomscrolling, sleep quality"
+    },
+    {
+      "handle": "atharvasoundankar/mental-health-and-lifestyle-habits-2019-2024",
+      "file": "Mental_Health_Lifestyle_Dataset.csv",
+      "rows": 3000,
+      "role": "Secondary prior: exercise level vs happiness"
+    }
+  ],
+  "sleep": {
+    "n": 1000,
+    "medians": {
+      "bedtime_screen_time_minutes": 44.0,
+      "total_daily_screen_time_hours": 3.345,
+      "doomscroll_sessions_per_night": 2.0,
+      "sleep_hours_per_night": 7.4,
+      "sleep_latency_minutes": 27.0,
+      "caffeine_intake_mg_per_day": 102.0,
+      "anxiety_score": 5.0,
+      "stress_score": 6.0,
+      "sleep_quality_score": 5.0,
+      "daytime_fatigue_score": 6.0,
+      "phone_checks_per_night": 2.0,
+      "exercise_minutes_per_day": 54.0,
+      "weekly_sleep_debt_hours": 3.9
+    },
+    "quantiles": {
+      "bedtime_screen_time_minutes": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          1.0,
+          16.9,
+          24.0,
+          30.0,
+          37.0,
+          44.0,
+          52.0,
+          60.0,
+          72.2,
+          92.0,
+          225.0
+        ]
+      },
+      "total_daily_screen_time_hours": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          1.0,
+          1.58,
+          2.02,
+          2.39,
+          2.81,
+          3.345,
+          3.81,
+          4.373,
+          5.21,
+          6.124,
+          12.95
+        ]
+      },
+      "doomscroll_sessions_per_night": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          2.0,
+          2.0,
+          3.0,
+          3.0,
+          4.0,
+          10.0
+        ]
+      },
+      "sleep_hours_per_night": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          4.0,
+          6.4,
+          6.8,
+          7.0,
+          7.2,
+          7.4,
+          7.6,
+          7.8,
+          8.02,
+          8.4,
+          9.8
+        ]
+      },
+      "sleep_latency_minutes": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          2.0,
+          10.0,
+          15.0,
+          20.0,
+          23.0,
+          27.0,
+          30.0,
+          34.0,
+          39.2,
+          47.0,
+          90.0
+        ]
+      },
+      "caffeine_intake_mg_per_day": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          3.0,
+          34.0,
+          51.0,
+          69.0,
+          85.0,
+          102.0,
+          124.4,
+          151.0,
+          182.0,
+          227.0,
+          600.0
+        ]
+      },
+      "anxiety_score": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          4.0,
+          5.0,
+          5.0,
+          5.0,
+          6.0,
+          7.0,
+          10.0
+        ]
+      },
+      "stress_score": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          1.0,
+          4.0,
+          5.0,
+          5.0,
+          6.0,
+          6.0,
+          7.0,
+          7.0,
+          8.0,
+          9.0,
+          10.0
+        ]
+      },
+      "sleep_quality_score": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          2.0,
+          4.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0,
+          5.0
+        ]
+      },
+      "daytime_fatigue_score": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          1.0,
+          4.0,
+          4.0,
+          5.0,
+          5.0,
+          6.0,
+          6.0,
+          7.0,
+          7.0,
+          8.0,
+          10.0
+        ]
+      },
+      "phone_checks_per_night": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          0.0,
+          1.0,
+          1.0,
+          2.0,
+          2.0,
+          2.0,
+          3.0,
+          3.0,
+          4.0,
+          5.0,
+          9.0
+        ]
+      },
+      "exercise_minutes_per_day": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          0.0,
+          26.0,
+          36.0,
+          42.0,
+          47.0,
+          54.0,
+          58.4,
+          65.0,
+          72.0,
+          80.0,
+          124.0
+        ]
+      },
+      "weekly_sleep_debt_hours": {
+        "q": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0
+        ],
+        "v": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          2.6,
+          3.9,
+          5.5,
+          6.9,
+          8.8,
+          11.7,
+          29.4
+        ]
+      }
+    },
+    "correlationsSleepQuality": {
+      "bedtime_screen_time_minutes": -0.4207,
+      "total_daily_screen_time_hours": -0.2339,
+      "doomscroll_sessions_per_night": -0.3858,
+      "sleep_hours_per_night": 0.3459,
+      "sleep_latency_minutes": -0.3848,
+      "caffeine_intake_mg_per_day": -0.0085,
+      "anxiety_score": -0.1454,
+      "stress_score": -0.0309,
+      "daytime_fatigue_score": -0.4498,
+      "phone_checks_per_night": -0.214,
+      "exercise_minutes_per_day": 0.1156,
+      "weekly_sleep_debt_hours": -0.3347
+    },
+    "correlationsSleepHours": {
+      "bedtime_screen_time_minutes": -0.4367,
+      "total_daily_screen_time_hours": -0.2515,
+      "doomscroll_sessions_per_night": -0.3516,
+      "sleep_latency_minutes": -0.3344,
+      "caffeine_intake_mg_per_day": 0.0287,
+      "anxiety_score": -0.1743,
+      "stress_score": -0.0817,
+      "sleep_quality_score": 0.3459,
+      "daytime_fatigue_score": -0.185,
+      "phone_checks_per_night": -0.1195,
+      "exercise_minutes_per_day": 0.1167,
+      "weekly_sleep_debt_hours": -0.8933
+    },
+    "doomscroller": {
+      "No": {
+        "sleep_quality_score": 4.908549,
+        "sleep_hours_per_night": 7.533015,
+        "anxiety_score": 4.227099,
+        "daytime_fatigue_score": 5.757634
+      },
+      "Yes": {
+        "sleep_quality_score": 4.739606,
+        "sleep_hours_per_night": 7.285504,
+        "anxiety_score": 5.102941,
+        "daytime_fatigue_score": 6.220588
+      }
+    },
+    "bedtimeRoutine": {
+      "Meditation/Journaling": {
+        "sleep_quality_score": 4.857143,
+        "sleep_hours_per_night": 7.437963
+      },
+      "No Fixed Routine": {
+        "sleep_quality_score": 4.852349,
+        "sleep_hours_per_night": 7.432692
+      },
+      "Reading": {
+        "sleep_quality_score": 4.834437,
+        "sleep_hours_per_night": 7.364968
+      },
+      "Scrolling Social Media": {
+        "sleep_quality_score": 4.791667,
+        "sleep_hours_per_night": 7.385067
+      },
+      "Watching Videos": {
+        "sleep_quality_score": 4.852273,
+        "sleep_hours_per_night": 7.46087
+      },
+      "nan": {
+        "sleep_quality_score": 4.894737,
+        "sleep_hours_per_night": 7.695
+      }
+    }
+  },
+  "mental": {
+    "n": 3000,
+    "happinessByExercise": {
+      "High": 5.5454,
+      "Low": 5.2895,
+      "Moderate": 5.3583
+    },
+    "happinessBySleepBin": {
+      "<5": 5.3166,
+      "5-6": 5.2856,
+      "6-7": 5.4651,
+      "7-8": 5.4213,
+      "8+": 5.4866
+    },
+    "happinessByScreenBin": {
+      "<3": 5.4708,
+      "3-5": 5.2662,
+      "5-7": 5.3963,
+      "7+": 5.5562
+    },
+    "note": "Happiness correlations in this set are weak; used only as a small exercise prior."
+  }
+}

@@ -1,11 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { notifyHabitComplete } from '../api/n8n'
 import { persistState } from '../api/persist'
+import { hasPython } from '../api/env'
+import { predictTasks } from '../api/python'
 import { ensureSession } from '../api/supabase'
 import { HABIT_MAP } from './habits'
 import {
   completeTask,
   loadState,
+  localDateKey,
   saveState,
   simulateTick,
   freshSeason,
@@ -70,6 +73,46 @@ export function GameProvider({ children }) {
       clearInterval(id)
     }
   }, [state.location?.lat, state.location?.lon])
+
+  useEffect(() => {
+    if (!hasPython || !state.onboardingComplete) return
+    const today = localDateKey()
+    const signature = [
+      today,
+      state.behavior?.bedtimeScreenMins,
+      state.behavior?.sleepHours,
+      (state.anchors || []).join(','),
+      state.weather?.code,
+    ].join('|')
+    if (state.deckSource === 'python' && state.mlSig === signature) return
+    if (state.deckDate === today && state.deck?.some((card) => card.done)) return
+    let cancelled = false
+    predictTasks({
+      resources: state.resources,
+      weather: state.weather,
+      behavior: state.behavior,
+      anchors: state.anchors,
+    }).then((result) => {
+      if (cancelled || !result?.deck?.length) return
+      setState((s) => {
+        const day = localDateKey()
+        if (s.deckDate === day && s.deck?.some((card) => card.done)) return s
+        return { ...s, deck: result.deck, deckDate: day, deckSource: 'python', mlSig: signature }
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    state.onboardingComplete,
+    state.deckDate,
+    state.deckSource,
+    state.mlSig,
+    state.behavior?.bedtimeScreenMins,
+    state.behavior?.sleepHours,
+    state.anchors,
+    state.weather?.code,
+  ])
 
   const finishOnboarding = useCallback((plantName, anchors) => {
     const next = simulateTick({
