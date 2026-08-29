@@ -14,5 +14,5 @@ export function sceneWeather(kind) {
 export function plantBackgroundSrc({ weatherKind, weather, timeOfDay: tod } = {}) {
   const sky = sceneWeather(weatherKind)
   const night = isNightScene(weather, tod)
-  return `/backgrounds/${sky}-${night ? 'night' : 'day'}.jpg`
+  return `/backgrounds/${sky}-${night ? 'night' : 'day'}.gif`
 }

@@ -5,6 +5,7 @@ export default function PlantStage({ frame, className, children }) {
   return (
     <div className={`relative overflow-hidden ${className || ''}`}>
       <img
+        key={src}
         src={src}
         alt=""
         className="pointer-events-none absolute inset-0 h-full w-full object-cover object-bottom"
