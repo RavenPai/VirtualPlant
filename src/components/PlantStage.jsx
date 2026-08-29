@@ -1,4 +1,5 @@
 import { plantBackgroundSrc } from '../game/plantScene'
+import WeatherFx from './WeatherFx'
 
 export default function PlantStage({ frame, className, children }) {
   const src = plantBackgroundSrc(frame)
@@ -8,9 +9,10 @@ export default function PlantStage({ frame, className, children }) {
         key={src}
         src={src}
         alt=""
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-bottom"
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-bottom"
       />
-      <div className="relative z-[1] h-full w-full">{children}</div>
+      <WeatherFx frame={frame} />
+      <div className="relative z-[2] h-full w-full">{children}</div>
     </div>
   )
 }
