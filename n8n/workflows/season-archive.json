@@ -1,0 +1,50 @@
+{
+  "name": "VP Season Archive",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "5 0 * * *" }] }
+      },
+      "id": "daily",
+      "name": "Daily archive check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/seasons?status=eq.active&select=*",
+        "headerParametersUi": {
+          "parameter": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+          ]
+        }
+      },
+      "id": "get-seasons",
+      "name": "Get active seasons",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.PYTHON_API_URL}}/v1/season-consistency",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ snapshots: $json.snapshots || [] }) }}"
+      },
+      "id": "classify",
+      "name": "Python classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0]
+    }
+  ],
+  "connections": {
+    "Daily archive check": { "main": [[{ "node": "Get active seasons", "type": "main", "index": 0 }]] },
+    "Get active seasons": { "main": [[{ "node": "Python classify", "type": "main", "index": 0 }]] }
+  }
+}

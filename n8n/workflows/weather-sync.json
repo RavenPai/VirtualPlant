@@ -1,0 +1,69 @@
+{
+  "name": "VP Weather Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 30 }] }
+      },
+      "id": "every-30",
+      "name": "Every 30 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/profiles?select=id,location&onboarding_complete=eq.true",
+        "headerParametersUi": {
+          "parameter": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" }
+          ]
+        }
+      },
+      "id": "get-profiles",
+      "name": "Get profiles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{$json.location.lat || 16.84}}&longitude={{$json.location.lon || 96.17}}&current=temperature_2m,cloud_cover,weather_code,is_day,precipitation"
+      },
+      "id": "open-meteo",
+      "name": "Open-Meteo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/seasons?user_id=eq.{{$('Get profiles').item.json.id}}&status=eq.active",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ weather: { tempC: $json.current.temperature_2m, cloudCover: $json.current.cloud_cover, code: $json.current.weather_code, isDay: $json.current.is_day === 1, precipitation: $json.current.precipitation, fetchedAt: Date.now() } }) }}",
+        "headerParametersUi": {
+          "parameter": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "id": "save-weather",
+      "name": "Save weather",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 0]
+    }
+  ],
+  "connections": {
+    "Every 30 minutes": { "main": [[{ "node": "Get profiles", "type": "main", "index": 0 }]] },
+    "Get profiles": { "main": [[{ "node": "Open-Meteo", "type": "main", "index": 0 }]] },
+    "Open-Meteo": { "main": [[{ "node": "Save weather", "type": "main", "index": 0 }]] }
+  }
+}

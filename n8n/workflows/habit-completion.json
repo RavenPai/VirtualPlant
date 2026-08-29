@@ -1,0 +1,67 @@
+{
+  "name": "VP Habit Completion Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "habit-complete",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook",
+      "name": "Habit webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "virtual-plant-habit-complete"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.PYTHON_API_URL}}/v1/growth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body.state) }}"
+      },
+      "id": "python-growth",
+      "name": "Recalculate growth",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/habit_logs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Habit webhook').item.json.body.log) }}",
+        "headerParametersUi": {
+          "parameter": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        }
+      },
+      "id": "log-habit",
+      "name": "Log habit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify({ ok: true }) }}" },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 0]
+    }
+  ],
+  "connections": {
+    "Habit webhook": { "main": [[{ "node": "Recalculate growth", "type": "main", "index": 0 }]] },
+    "Recalculate growth": { "main": [[{ "node": "Log habit", "type": "main", "index": 0 }]] },
+    "Log habit": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  }
+}

@@ -1,4 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { notifyHabitComplete } from '../api/n8n'
+import { persistState } from '../api/persist'
+import { ensureSession } from '../api/supabase'
+import { HABIT_MAP } from './habits'
 import {
   completeTask,
   loadState,
@@ -16,7 +20,15 @@ export function GameProvider({ children }) {
   const [replay, setReplay] = useState(null)
 
   useEffect(() => {
+    ensureSession()
+  }, [])
+
+  useEffect(() => {
     saveState(state)
+    const id = setTimeout(() => {
+      persistState(state)
+    }, 800)
+    return () => clearTimeout(id)
   }, [state])
 
   useEffect(() => {
@@ -71,7 +83,24 @@ export function GameProvider({ children }) {
   }, [])
 
   const doTask = useCallback((habitId) => {
-    setState((s) => simulateTick(completeTask(s, habitId)))
+    setState((s) => {
+      const next = simulateTick(completeTask(s, habitId))
+      const habit = HABIT_MAP[habitId]
+      notifyHabitComplete({
+        habitId,
+        state: {
+          resources: next.resources,
+          hp: next.hp,
+          lastTick: next.lastTick,
+          growthAccumulated: next.growthAccumulated,
+          seasonStart: next.seasonStart,
+        },
+        log: habit
+          ? { habit_id: habitId, resource: habit.resource, gain: habit.gain }
+          : { habit_id: habitId },
+      })
+      return next
+    })
   }, [])
 
   const setBehavior = useCallback((behavior) => {
